@@ -15,6 +15,7 @@ const server = http.createServer(app);
 
 // Configure CORS for Express BEFORE routes
 const allowedOrigins = [
+  "https://reception-management-system-opal.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3000",

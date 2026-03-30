@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import { MdLocationOn, MdEmail } from "react-icons/md";
 import logo from "../assets/image.png";
+import QRCode from "../assets/frame (1).png";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -43,7 +44,11 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-32 sm:w-40 lg:w-50 h-16 sm:h-20 mb-4 sm:mb-6">
-              <img src={logo} className="object-cover h-12 sm:h-16 lg:h-20 w-auto" alt="MININFRA LOGO" />
+              <img
+                src={logo}
+                className="object-cover h-12 sm:h-16 lg:h-20 w-auto"
+                alt="MININFRA LOGO"
+              />
             </div>
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6 px-2">
               Welcome to the
@@ -56,15 +61,10 @@ const Home = () => {
               efficient, and completely digital.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <button
-                onClick={() => navigate("/visitor-registration")}
-                className="bg-gradient-to-r from-primary-500 to-secondary-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:from-primary-600 hover:to-secondary-600 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base"
-              >
-                <FaUserCheck />
-                <span>Register as Visitor</span>
-                <FaArrowRight />
-              </button>
-              
+              <div className="">
+                <img src={QRCode} className="w-20 h-20 object-cover" alt="Scan this to register as visitor" />
+                <span>Scan to continue as a visitor</span>
+              </div>
               <Link
                 to="/login"
                 className="bg-white/10 backdrop-blur-md text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-white/20 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base border border-white/20"
@@ -83,16 +83,28 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">100%</div>
-              <p className="text-white/80 text-sm sm:text-base">Digital Process</p>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                100%
+              </div>
+              <p className="text-white/80 text-sm sm:text-base">
+                Digital Process
+              </p>
             </div>
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">Real-time</div>
-              <p className="text-white/80 text-sm sm:text-base">Status Updates</p>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                Real-time
+              </div>
+              <p className="text-white/80 text-sm sm:text-base">
+                Status Updates
+              </p>
             </div>
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">Email</div>
-              <p className="text-white/80 text-sm sm:text-base">Notifications</p>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                Email
+              </div>
+              <p className="text-white/80 text-sm sm:text-base">
+                Notifications
+              </p>
             </div>
           </div>
         </div>
@@ -114,7 +126,9 @@ const Home = () => {
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
               <FaIdCard className="text-white text-xl sm:text-2xl" />
             </div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">1. Register</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
+              1. Register
+            </h3>
             <p className="text-white/80 text-sm sm:text-base">
               Fill in your details to register as a visitor at the reception
             </p>
@@ -198,7 +212,9 @@ const Home = () => {
             <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
               <FaEnvelope className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">Email Updates</h3>
+                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
+                  Email Updates
+                </h3>
                 <p className="text-white/70 text-xs sm:text-sm">
                   Receive confirmation and status emails
                 </p>
@@ -208,7 +224,9 @@ const Home = () => {
             <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
               <FaClock className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">24/7 Access</h3>
+                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
+                  24/7 Access
+                </h3>
                 <p className="text-white/70 text-xs sm:text-sm">
                   Check your request status anytime
                 </p>
@@ -294,7 +312,9 @@ const Home = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
             <div className="flex items-center space-x-2">
               <FaIdCard className="text-white text-lg sm:text-xl" />
-              <span className="text-white font-semibold text-sm sm:text-base">Reception System</span>
+              <span className="text-white font-semibold text-sm sm:text-base">
+                Reception System
+              </span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-white/70 text-xs sm:text-sm">
               <span>© 2026 Reception Management System</span>
