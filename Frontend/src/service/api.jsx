@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 class APIService {
   constructor() {
     this.api = axios.create({
-      baseURL: "http://localhost:3400/api/",
+      baseURL: "https://reception-management-system.onrender.com/api/",
       headers: {
         "Content-Type": "application/json",
       },
@@ -75,7 +75,7 @@ class APIService {
       try {
         const userData = JSON.parse(user);
         if (userData.token) {
-          this.socket = io("http://localhost:3400", {
+          this.socket = io("https://reception-management-system.onrender.com", {
             auth: { token: userData.token },
             transports: ['websocket', 'polling'],
             withCredentials: true
