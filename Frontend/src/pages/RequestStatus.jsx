@@ -1,0 +1,370 @@
+// src/pages/RequestStatus.jsx
+import React, { useState, useEffect } from "react";
+import { useSearchParams, Link } from "react-router-dom";
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaClock,
+  FaEnvelope,
+  FaCalendarAlt,
+  FaClipboardList,
+  FaArrowLeft,
+  FaSpinner,
+  FaPhone,
+  FaBuilding,
+  FaUser,
+  FaCopy,
+  FaHome,
+} from "react-icons/fa";
+import { MdEmail, MdEvent } from "react-icons/md";
+import API from "../service/api";
+import toast from "react-hot-toast";
+import logo from '../assets/image.png';
+
+const RequestStatus = () => {
+  const [searchParams] = useSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [request, setRequest] = useState(null);
+  const [visitor, setVisitor] = useState(null);
+  const requestId = searchParams.get('id');
+
+  useEffect(() => {
+    if (requestId) {
+      fetchRequestDetails(requestId);
+    } else {
+      setLoading(false);
+    }
+  }, [requestId]);
+
+  const fetchRequestDetails = async (id) => {
+    try {
+      setLoading(true);
+      const response = await API.getRequestById(id);
+      
+      if (response.data.success) {
+        setRequest(response.data.request);
+        setVisitor(response.data.request.visitor);
+      } else {
+        toast.error("Request not found");
+      }
+    } catch (error) {
+      console.error("Error fetching request:", error);
+      toast.error("Failed to load request details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch(status) {
+      case 'pending':
+        return <FaClock className="text-yellow-500 text-3xl" />;
+      case 'approved':
+        return <FaCheckCircle className="text-green-500 text-3xl" />;
+      case 'rejected':
+        return <FaTimesCircle className="text-red-500 text-3xl" />;
+      case 'completed':
+        return <FaCheckCircle className="text-blue-500 text-3xl" />;
+      default:
+        return <FaClock className="text-gray-500 text-3xl" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'pending':
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case 'approved':
+        return "bg-green-100 text-green-800 border-green-200";
+      case 'rejected':
+        return "bg-red-100 text-red-800 border-red-200";
+      case 'completed':
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleString();
+  };
+
+  const copyLink = () => {
+    const link = `${window.location.origin}/request-status?id=${requestId}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Link copied to clipboard!");
+  };
+
+  if (!requestId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+          {/* Logo in No Request ID State */}
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Logo" className="h-20 w-auto" />
+          </div>
+          <FaClipboardList className="text-gray-400 text-5xl mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">No Request ID</h2>
+          <p className="text-gray-600 mb-6">Please provide a valid request ID to check status.</p>
+          <Link
+            to="/"
+            className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            <FaHome />
+            <span>Go to Home</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
+        <div className="text-center">
+          {/* Logo in Loading State */}
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Logo" className="h-20 w-auto animate-pulse" />
+          </div>
+          <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
+          <p className="text-white text-lg">Loading request details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!request) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+          {/* Logo in Request Not Found State */}
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Logo" className="h-20 w-auto" />
+          </div>
+          <FaTimesCircle className="text-red-500 text-5xl mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Request Not Found</h2>
+          <p className="text-gray-600 mb-6">The request you're looking for doesn't exist or has been removed.</p>
+          <Link
+            to="/"
+            className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            <FaHome />
+            <span>Back to Home</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Navigation Buttons */}
+        <div className="flex justify-between items-center mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center space-x-2 text-white hover:text-primary-200 transition-colors"
+          >
+            <FaArrowLeft />
+            <span>Back to Home</span>
+          </Link>
+          <button
+            onClick={copyLink}
+            className="inline-flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+          >
+            <FaCopy />
+            <span>Copy Link</span>
+          </button>
+        </div>
+
+        {/* Main Card */}
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header with Logo */}
+          <div className={`p-6 border-b ${getStatusColor(request.status)}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                {/* Logo Badge */}
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full">
+                    <div className="w-full h-full rounded-full flex items-center justify-center ">
+                      <img 
+                        src={logo} 
+                        alt="Logo" 
+                        className="w-12 h-12 object-cover rounded-[10px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">Request Status</h1>
+                  <p className="text-sm opacity-75">
+                    ID: #{request._id.slice(-8).toUpperCase()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end space-y-2">
+                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(request.status)}`}>
+                  {request.status.toUpperCase()}
+                </span>
+                {getStatusIcon(request.status)}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Service Details */}
+            <div className="bg-gray-50 rounded-xl p-5">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                <FaClipboardList className="text-primary-500" />
+                <span>Service Details</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Service Name</p>
+                  <p className="font-semibold text-gray-800">
+                    {request.service?.name}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Event Date</p>
+                  <p className="font-semibold text-gray-800 flex items-center space-x-1">
+                    <MdEvent className="text-gray-400" />
+                    <span>{formatDate(request.eventDate)}</span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Submitted On</p>
+                  <p className="font-semibold text-gray-800 flex items-center space-x-1">
+                    <FaClock className="text-gray-400" />
+                    <span>{formatDate(request.createdAt)}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Visitor Details */}
+            {visitor && (
+              <div className="bg-gray-50 rounded-xl p-5">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                  <FaUser className="text-primary-500" />
+                  <span>Visitor Details</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Full Name</p>
+                    <p className="font-semibold text-gray-800">{visitor.fullName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Institution</p>
+                    <p className="font-semibold text-gray-800 flex items-center space-x-1">
+                      <FaBuilding className="text-gray-400 text-sm" />
+                      <span>{visitor.institution}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-semibold text-gray-800 flex items-center space-x-1">
+                      <MdEmail className="text-gray-400" />
+                      <span>{visitor.email}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Contact</p>
+                    <p className="font-semibold text-gray-800 flex items-center space-x-1">
+                      <FaPhone className="text-gray-400" />
+                      <span>{visitor.contactType}: {visitor.contactValue}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Message */}
+            {request.message && (
+              <div className="bg-gray-50 rounded-xl p-5">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center space-x-2">
+                  <FaEnvelope className="text-primary-500" />
+                  <span>Your Message</span>
+                </h3>
+                <p className="text-gray-700 italic">"{request.message}"</p>
+              </div>
+            )}
+
+            {/* Staff Notes */}
+            {request.notes && (
+              <div className="bg-yellow-50 rounded-xl p-5 border border-yellow-200">
+                <h3 className="text-lg font-semibold text-yellow-800 mb-3">Staff Notes</h3>
+                <p className="text-yellow-700">{request.notes}</p>
+              </div>
+            )}
+
+            {/* Timeline */}
+            <div className="bg-gray-50 rounded-xl p-5">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Timeline</h3>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <FaCheckCircle className="text-green-500 text-sm" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-800">Request Submitted</p>
+                    <p className="text-sm text-gray-500">{formatDate(request.createdAt)}</p>
+                  </div>
+                </div>
+                
+                {request.approvedAt && (
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FaCheckCircle className="text-blue-500 text-sm" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">Request Approved</p>
+                      <p className="text-sm text-gray-500">{formatDate(request.approvedAt)}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {request.completedAt && (
+                  <div className="flex items-start space-x-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FaCheckCircle className="text-purple-500 text-sm" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800">Request Completed</p>
+                      <p className="text-sm text-gray-500">{formatDate(request.completedAt)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Email Note with Logo */}
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <div className="flex items-center justify-center space-x-3 mb-2">
+                <img src={logo} alt="Logo" className="h-8 w-auto" />
+                <FaEnvelope className="text-blue-500 text-xl" />
+              </div>
+              <p className="text-sm text-blue-700">
+                A confirmation email has been sent to <strong>{visitor?.email}</strong>
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                You can also track your request using this page anytime
+              </p>
+            </div>
+
+            {/* Footer with Logo */}
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="flex items-center justify-center space-x-2 text-gray-400 text-xs">
+                <img src={logo} alt="Logo" className="h-6 w-auto" />
+                <span>Reception Management System</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RequestStatus;
