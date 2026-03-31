@@ -1,4 +1,4 @@
-// Backend/server.js - Modified for both local and Vercel
+// Backend/server.js - Simplified CORS
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -10,39 +10,21 @@ dotenv.config();
 
 const app = express();
 
-// ==================== CORS CONFIGURATION ====================
-// Allowed origins
+// ==================== SIMPLIFIED CORS ====================
+// Directly allow your frontend domains
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
-  'http://localhost:5000',
-  'https://reception-management-system-opal.vercel.app',
-  'https://reception-management-system-pbrh.vercel.app',
-  process.env.FRONTEND_URL
-].filter(Boolean);
+  'https://reception-management-system-opal.vercel.app'
+];
 
-// CORS middleware - MUST come before routes
+// Simple CORS middleware - no function, just direct
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.warn(`⚠️ CORS blocked origin: ${origin}`);
-      callback(null, false);
-    }
-  },
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600 // Cache preflight for 10 minutes
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
-
-// Handle preflight requests
-app.options('*', cors());
 
 // Body parsing middleware
 app.use(express.json());
@@ -96,7 +78,6 @@ if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3400;
   const server = http.createServer(app);
   
-  // Socket.io setup (if you use it)
   const io = new Server(server, {
     cors: {
       origin: allowedOrigins,
@@ -116,7 +97,6 @@ if (process.env.NODE_ENV !== 'production') {
   connectDB().then(() => {
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📡 Socket.io ready`);
       console.log(`✅ CORS enabled for: ${allowedOrigins.join(', ')}`);
     });
   });
