@@ -17,7 +17,7 @@ const allowedOrigins = [
   'http://localhost:5173',    // Vite default port
   'http://localhost:5174',
   'http://127.0.0.1:5173',
-  'https://reception-management-system-opal.vercel.app'
+  'https://reception-management-system-iota.vercel.app'
 ];
 
 // Add FRONTEND_URL from env if exists
