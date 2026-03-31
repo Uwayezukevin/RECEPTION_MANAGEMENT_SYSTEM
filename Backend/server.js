@@ -16,6 +16,7 @@ const server = http.createServer(app);
 // Configure CORS for Express BEFORE routes
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  "https://reception-management-system-kappa.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:3000",
