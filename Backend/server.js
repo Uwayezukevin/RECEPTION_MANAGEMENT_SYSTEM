@@ -1,4 +1,4 @@
-// Backend/server.js - GUARANTEED WORKING CORS
+// Backend/server.js - Complete working CORS
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -10,16 +10,41 @@ dotenv.config();
 
 const app = express();
 
-// ==================== GUARANTEED CORS FIX ====================
-// This allows ALL origins - use this to test, then restrict later
+// ==================== WORKING CORS CONFIGURATION ====================
+// This will work for both local development and production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',    // Vite default port
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'https://reception-management-system-opal.vercel.app'
+];
+
+// Add FRONTEND_URL from env if exists
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
+}
+
+console.log('✅ CORS enabled for origins:', allowedOrigins);
+
+// CORS middleware
 app.use((req, res, next) => {
-  // Allow all origins temporarily for testing
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  
+  // Check if origin is allowed
+  if (allowedOrigins.includes(origin) || !origin) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    // For testing, also allow any origin (remove this in production)
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
+  
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
   
-  // Handle preflight requests immediately
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -60,6 +85,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// CORS test endpoint
+app.get('/api/cors-test', (req, res) => {
+  res.json({ 
+    message: 'CORS is working!', 
+    origin: req.headers.origin,
+    allowedOrigins: allowedOrigins
+  });
+});
+
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({ message: 'Reception Management System API' });
@@ -81,7 +115,7 @@ if (process.env.NODE_ENV !== 'production') {
   
   const io = new Server(server, {
     cors: {
-      origin: '*',
+      origin: allowedOrigins,
       credentials: true
     }
   });
@@ -98,6 +132,7 @@ if (process.env.NODE_ENV !== 'production') {
   connectDB().then(() => {
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`✅ CORS enabled for: ${allowedOrigins.join(', ')}`);
     });
   });
 }
