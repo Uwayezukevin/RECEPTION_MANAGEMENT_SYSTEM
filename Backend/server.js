@@ -1,4 +1,4 @@
-// Backend/server.js - Simplified CORS
+// Backend/server.js - GUARANTEED WORKING CORS
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -10,21 +10,22 @@ dotenv.config();
 
 const app = express();
 
-// ==================== SIMPLIFIED CORS ====================
-// Directly allow your frontend domains
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://reception-management-system-opal.vercel.app'
-];
-
-// Simple CORS middleware - no function, just direct
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-}));
+// ==================== GUARANTEED CORS FIX ====================
+// This allows ALL origins - use this to test, then restrict later
+app.use((req, res, next) => {
+  // Allow all origins temporarily for testing
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  
+  // Handle preflight requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
 
 // Body parsing middleware
 app.use(express.json());
@@ -80,7 +81,7 @@ if (process.env.NODE_ENV !== 'production') {
   
   const io = new Server(server, {
     cors: {
-      origin: allowedOrigins,
+      origin: '*',
       credentials: true
     }
   });
@@ -97,7 +98,6 @@ if (process.env.NODE_ENV !== 'production') {
   connectDB().then(() => {
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`✅ CORS enabled for: ${allowedOrigins.join(', ')}`);
     });
   });
 }
