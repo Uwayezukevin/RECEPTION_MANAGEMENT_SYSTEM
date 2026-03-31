@@ -11,5 +11,6 @@
       "src": "/(.*)",
       "dest": "Backend/server.js"
     }
-  ]
+  ],
+  "buildCommand": "npm install"
 }
