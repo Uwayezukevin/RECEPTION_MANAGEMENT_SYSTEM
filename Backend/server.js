@@ -74,6 +74,7 @@ import authRoutes from './routes/authRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 
 // Routes
+app.use('/', (req,res) => res.send('Hello world'));
 app.use('/api/requests', requestRoutes);
 app.use('/api/visitors', visitorRoutes);
 app.use('/api/services', serviceRoutes);
