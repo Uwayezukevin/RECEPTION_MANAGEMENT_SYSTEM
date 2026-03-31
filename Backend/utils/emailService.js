@@ -1,12 +1,34 @@
 // utils/emailService.js
 import nodemailer from 'nodemailer';
-import dns from 'dns';
 
-// Force DNS resolution to use IPv4
-dns.setDefaultResultOrder('ipv4first');
+// Note: dns.setDefaultResultOrder is a built-in Node.js function, no package needed!
+// It's available in Node.js v17+ by default
+
+// Force DNS resolution to use IPv4 (built-in Node.js, no external package needed)
+if (typeof dns !== 'undefined') {
+  try {
+    const dns = await import('dns');
+    dns.setDefaultResultOrder('ipv4first');
+    console.log('✅ DNS set to prefer IPv4');
+  } catch (error) {
+    console.log('⚠️ DNS module not available, using default settings');
+  }
+}
 
 // Create transporter with explicit IPv4 preference
 const createTransporter = () => {
+  // Skip if email is disabled
+  if (process.env.EMAIL_ENABLED !== 'true') {
+    console.log('📧 Email service disabled (EMAIL_ENABLED != true)');
+    return null;
+  }
+
+  // Check if email configuration exists
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.log('⚠️ Email configuration incomplete, email disabled');
+    return null;
+  }
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -16,51 +38,49 @@ const createTransporter = () => {
       pass: process.env.EMAIL_PASSWORD
     },
     // Force connection options
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-    // Disable IPv6 and force IPv4
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+    // Force IPv4 (this is a nodemailer option, works without dns package)
+    family: 4,
+    // TLS options
     tls: {
-      rejectUnauthorized: false,
-      ciphers: 'SSLv3'
-    },
-    // Use specific IP family
-    family: 4, // Force IPv4
-    // Debug option
-    debug: process.env.NODE_ENV === 'development'
+      rejectUnauthorized: false
+    }
   });
 };
 
 let transporter = createTransporter();
 
-// Verify connection on startup
-const verifyConnection = async () => {
-  try {
-    await transporter.verify();
-    console.log('✅ Email service connected successfully');
-  } catch (error) {
-    console.error('❌ Email service connection failed:', error.message);
-    // Don't retry immediately to avoid blocking
-    setTimeout(() => {
-      transporter = createTransporter();
-      verifyConnection();
-    }, 5000);
-  }
-};
-
-// Call verifyConnection but don't wait for it
-verifyConnection().catch(console.error);
+// Verify connection only if transporter exists and email is enabled
+if (transporter && process.env.EMAIL_ENABLED === 'true') {
+  const verifyConnection = async () => {
+    try {
+      await transporter.verify();
+      console.log('✅ Email service connected successfully');
+    } catch (error) {
+      console.log('⚠️ Email service not available (will retry on send)');
+    }
+  };
+  verifyConnection().catch(() => {});
+}
 
 export const sendEmail = async ({ to, subject, html, text }) => {
+  // Skip if email is disabled
+  if (process.env.EMAIL_ENABLED !== 'true') {
+    console.log(`📧 Email skipped (disabled): ${subject}`);
+    return { success: true, skipped: true };
+  }
+
   // Validate email configuration
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-    console.error('Email configuration missing');
-    return null; // Return null instead of throwing
+  if (!transporter) {
+    console.log('📧 Email skipped: transporter not configured');
+    return null;
   }
 
   // Skip sending if no recipient
   if (!to || !to.includes('@')) {
-    console.error('Invalid email recipient:', to);
+    console.log('📧 Email skipped: Invalid email recipient:', to);
     return null;
   }
 
@@ -77,22 +97,21 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     console.log(`✅ Email sent successfully to ${to}`);
     return info;
   } catch (error) {
-    console.error('❌ Email sending failed:', {
-      to,
-      subject,
-      error: error.message,
-      code: error.code
-    });
-    
-    // Don't throw, just return null
+    console.log(`⚠️ Email failed: ${error.message}`);
     return null;
   }
 };
 
 export const sendRequestStatusEmail = async (visitor, request, status, notes) => {
+  // Skip if email is disabled
+  if (process.env.EMAIL_ENABLED !== 'true') {
+    console.log(`📧 Status email skipped (disabled): ${status}`);
+    return null;
+  }
+
   // Skip if no visitor email
   if (!visitor?.email) {
-    console.log('No visitor email, skipping email');
+    console.log('📧 Status email skipped: No visitor email');
     return null;
   }
 
@@ -222,7 +241,7 @@ export const sendRequestStatusEmail = async (visitor, request, status, notes) =>
       html
     });
   } catch (error) {
-    console.error('Failed to send status email:', error);
+    console.log(`⚠️ Failed to send status email: ${error.message}`);
     return null;
   }
 };
