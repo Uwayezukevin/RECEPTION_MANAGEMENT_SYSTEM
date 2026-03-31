@@ -1,142 +1,113 @@
-// Backend/server.js - Complete working CORS
-import express from 'express';
-import cors from 'cors';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import { Server } from 'socket.io';
-import http from 'http';
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import http from "http";
+import { Server } from "socket.io";
+import jwt from "jsonwebtoken"; // Add this import
+import router from "./routes/routes.js";
+import Notification from "./models/Notification.js";
+import conn from "./config/db.js";
 
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
 
-// ==================== WORKING CORS CONFIGURATION ====================
-// This will work for both local development and production
+// Configure CORS for Express BEFORE routes
 const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',    // Vite default port
-  'http://localhost:5174',
-  'http://127.0.0.1:5173',
-  'https://reception-management-system-iota.vercel.app'
+  "https://reception-management-system-opal.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
 ];
 
-// Add FRONTEND_URL from env if exists
-if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(process.env.FRONTEND_URL.replace(/\/$/, ''));
-}
+// Express CORS middleware - this should come before routes
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('Blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-console.log('✅ CORS enabled for origins:', allowedOrigins);
+// Socket.io CORS configuration
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST"]
+  },
+});
 
-// CORS middleware
+// Socket.io middleware for authentication
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    console.log('Socket connection: No token provided');
+    return next(new Error("Authentication required"));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.userId = decoded.id;
+    console.log('Socket authenticated for user:', socket.userId);
+    next();
+  } catch (err) {
+    console.log('Socket authentication error:', err.message);
+    next(new Error("Invalid token"));
+  }
+});
+
+// Socket.io connection handling
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.userId);
+
+  // Join user's personal room
+  if (socket.userId) {
+    socket.join(`user_${socket.userId}`);
+    console.log(`User ${socket.userId} joined room user_${socket.userId}`);
+  }
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.userId);
+  });
+});
+
+// Middleware to emit notifications in real-time
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Check if origin is allowed
-  if (allowedOrigins.includes(origin) || !origin) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  } else {
-    // For testing, also allow any origin (remove this in production)
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  }
-  
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Expose-Headers', 'Content-Length, X-Requested-With');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  
+  req.io = io;
   next();
 });
 
-// Body parsing middleware
+// Parse JSON bodies
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// MongoDB connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URL);
-    console.log('✅ MongoDB connected');
-  } catch (error) {
-    console.error('❌ MongoDB error:', error.message);
-  }
-};
-
-// Import routes
-import requestRoutes from './routes/requestRoutes.js';
-import visitorRoutes from './routes/visitorRoutes.js';
-import serviceRoutes from './routes/serviceRoutes.js';
-import authRoutes from './routes/authRoutes.js';
-import notificationRoutes from './routes/notificationRoutes.js';
 
 // Routes
-app.use('/', (req,res) => res.send('Hello world'));
-app.use('/api/requests', requestRoutes);
-app.use('/api/visitors', visitorRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use("/api", router);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// CORS test endpoint
-app.get('/api/cors-test', (req, res) => {
-  res.json({ 
-    message: 'CORS is working!', 
-    origin: req.headers.origin,
-    allowedOrigins: allowedOrigins
-  });
-});
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({ message: 'Reception Management System API' });
-});
-
-// Error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
-  res.status(err.status || 500).json({ 
-    success: false, 
-    msg: err.message || 'Internal Server Error' 
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    msg: err.message || 'Internal server error'
   });
 });
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 3400;
-  const server = http.createServer(app);
-  
-  const io = new Server(server, {
-    cors: {
-      origin: allowedOrigins,
-      credentials: true
-    }
-  });
-  
-  io.on('connection', (socket) => {
-    console.log('New client connected');
-    socket.on('disconnect', () => {
-      console.log('Client disconnected');
-    });
-  });
-  
-  app.set('io', io);
-  
-  connectDB().then(() => {
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`✅ CORS enabled for: ${allowedOrigins.join(', ')}`);
-    });
-  });
-}
-
-// Export app for Vercel
-export default app;
+const PORT = process.env.PORT || 3400;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`API URL: http://localhost:${PORT}/api`);
+  console.log(`WebSocket URL: ws://localhost:${PORT}`);
+  console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+});
