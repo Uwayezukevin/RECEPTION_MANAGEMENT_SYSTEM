@@ -1,24 +1,33 @@
 // utils/emailService.js
 import nodemailer from 'nodemailer';
+import dns from 'dns';
 
-// Create transporter with better timeout and error handling
+// Force DNS resolution to use IPv4
+dns.setDefaultResultOrder('ipv4first');
+
+// Create transporter with explicit IPv4 preference
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: process.env.EMAIL_SECURE === 'true', // false for port 587
+    secure: process.env.EMAIL_SECURE === 'true',
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
-    // Add these critical timeout settings
-    connectionTimeout: 30000, // 30 seconds
+    // Force connection options
+    connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
-    // For Gmail specifically
+    // Disable IPv6 and force IPv4
     tls: {
-      rejectUnauthorized: false // Only use if having certificate issues
-    }
+      rejectUnauthorized: false,
+      ciphers: 'SSLv3'
+    },
+    // Use specific IP family
+    family: 4, // Force IPv4
+    // Debug option
+    debug: process.env.NODE_ENV === 'development'
   });
 };
 
@@ -31,7 +40,7 @@ const verifyConnection = async () => {
     console.log('✅ Email service connected successfully');
   } catch (error) {
     console.error('❌ Email service connection failed:', error.message);
-    // Retry after 5 seconds
+    // Don't retry immediately to avoid blocking
     setTimeout(() => {
       transporter = createTransporter();
       verifyConnection();
@@ -39,20 +48,20 @@ const verifyConnection = async () => {
   }
 };
 
-// Call this when your app starts
-verifyConnection();
+// Call verifyConnection but don't wait for it
+verifyConnection().catch(console.error);
 
 export const sendEmail = async ({ to, subject, html, text }) => {
   // Validate email configuration
   if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-    console.error('Email configuration missing. Check environment variables.');
-    throw new Error('Email service not configured properly');
+    console.error('Email configuration missing');
+    return null; // Return null instead of throwing
   }
 
-  // Validate recipient
+  // Skip sending if no recipient
   if (!to || !to.includes('@')) {
     console.error('Invalid email recipient:', to);
-    throw new Error('Invalid email address');
+    return null;
   }
 
   try {
@@ -65,29 +74,28 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Email sent successfully to ${to}: ${info.messageId}`);
+    console.log(`✅ Email sent successfully to ${to}`);
     return info;
   } catch (error) {
     console.error('❌ Email sending failed:', {
       to,
       subject,
       error: error.message,
-      code: error.code,
-      command: error.command
+      code: error.code
     });
     
-    // If connection error, recreate transporter
-    if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED') {
-      console.log('🔄 Recreating transporter due to connection error...');
-      transporter = createTransporter();
-      await transporter.verify();
-    }
-    
-    throw error;
+    // Don't throw, just return null
+    return null;
   }
 };
 
 export const sendRequestStatusEmail = async (visitor, request, status, notes) => {
+  // Skip if no visitor email
+  if (!visitor?.email) {
+    console.log('No visitor email, skipping email');
+    return null;
+  }
+
   const statusMessages = {
     approved: 'has been approved',
     rejected: 'has been rejected',
@@ -171,15 +179,6 @@ export const sendRequestStatusEmail = async (visitor, request, status, notes) =>
           font-size: 12px;
           border-top: 1px solid #e0e0e0;
         }
-        .button {
-          display: inline-block;
-          background: ${statusColors[status] || '#4CAF50'};
-          color: white;
-          padding: 12px 24px;
-          text-decoration: none;
-          border-radius: 6px;
-          margin-top: 20px;
-        }
       </style>
     </head>
     <body>
@@ -188,8 +187,8 @@ export const sendRequestStatusEmail = async (visitor, request, status, notes) =>
           <h1>Service Request Update</h1>
         </div>
         <div class="content">
-          <p>Dear <strong>${visitor.fullName}</strong>,</p>
-          <p>Your service request ${statusMessages[status]}.</p>
+          <p>Dear <strong>${visitor.fullName || 'Valued Customer'}</strong>,</p>
+          <p>Your service request for <strong>${request.service?.name || 'Service'}</strong> ${statusMessages[status] || `has been ${status}`}.</p>
           
           <div class="request-details">
             <p><strong>📋 Service:</strong> ${request.service?.name || 'N/A'}</p>
@@ -204,8 +203,6 @@ export const sendRequestStatusEmail = async (visitor, request, status, notes) =>
               ${notes}
             </div>
           ` : ''}
-          
-          <p>You can track your request status at any time.</p>
           
           <p>Thank you for using our service!</p>
         </div>
@@ -226,7 +223,6 @@ export const sendRequestStatusEmail = async (visitor, request, status, notes) =>
     });
   } catch (error) {
     console.error('Failed to send status email:', error);
-    // Don't throw - we don't want to break the request flow
     return null;
   }
 };
