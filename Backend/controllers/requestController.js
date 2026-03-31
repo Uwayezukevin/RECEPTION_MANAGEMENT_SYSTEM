@@ -6,6 +6,17 @@ import Service from "../models/Service.js";
 import User from "../models/User.js";
 import { sendEmail } from "../utils/emailService.js";
 
+// Helper function to send emails in background
+const sendEmailInBackground = async (emailData) => {
+  try {
+    await sendEmail(emailData);
+    console.log(`✅ Email sent to ${emailData.to}`);
+  } catch (error) {
+    console.error(`❌ Email failed to ${emailData.to}:`, error.message);
+    // Optionally store failed email in database for retry
+  }
+};
+
 export const CreateRequest = async (req, res) => {
   try {
     const { service, eventDate, message, priority } = req.body;
@@ -81,9 +92,9 @@ export const CreateRequest = async (req, res) => {
     await savedRequest.populate("visitor");
     await savedRequest.populate("service");
 
-    // Create notifications for receptionists
+    // Create notifications for receptionists (this is fast and should work)
     const staffUsers = await User.find({ role: "receptionist" });
-    
+
     if (staffUsers.length > 0) {
       const notifications = staffUsers.map((staff) => ({
         recipient: staff._id,
@@ -101,10 +112,10 @@ export const CreateRequest = async (req, res) => {
       }));
 
       await Notification.insertMany(notifications);
-      console.log(`Created ${notifications.length} notifications for staff`);
+      console.log(`✅ Created ${notifications.length} notifications for staff`);
     }
 
-    // Send confirmation email to visitor
+    // Send confirmation email in background (non-blocking)
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -149,17 +160,20 @@ export const CreateRequest = async (req, res) => {
       </html>
     `;
 
-    await sendEmail({
+    // Send email without awaiting - this prevents timeout from blocking the response
+    sendEmailInBackground({
       to: visitor.email,
       subject: `Service Request Confirmation - ${serviceExists.name}`,
       html: emailHtml,
     });
 
+    // Return success immediately
     res.status(201).json({
       success: true,
-      msg: "Service request submitted successfully! You will receive a confirmation email shortly.",
+      msg: "Service request submitted successfully! A confirmation email will be sent shortly.",
       request: savedRequest,
     });
+    
   } catch (err) {
     console.error("Error creating request:", err);
     res.status(500).json({
@@ -251,7 +265,13 @@ export const UpdateRequestStatus = async (req, res) => {
     }
 
     // Valid status values
-    const validStatuses = ["pending", "approved", "rejected", "completed", "cancelled"];
+    const validStatuses = [
+      "pending",
+      "approved",
+      "rejected",
+      "completed",
+      "cancelled",
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -270,11 +290,16 @@ export const UpdateRequestStatus = async (req, res) => {
       });
     }
 
-    console.log("Found request:", request._id.toString(), "Current status:", request.status);
+    console.log(
+      "Found request:",
+      request._id.toString(),
+      "Current status:",
+      request.status,
+    );
 
     // Store old status for comparison
     const oldStatus = request.status;
-    
+
     // Update status
     request.status = status;
     if (notes) request.notes = notes;
@@ -309,7 +334,7 @@ export const UpdateRequestStatus = async (req, res) => {
       console.log("Staff notification created");
     }
 
-    // Send email notification to visitor (only if visitor email exists)
+    // Send email notification in background (non-blocking)
     if (request.visitor && request.visitor.email) {
       const emailHtml = `
         <!DOCTYPE html>
@@ -345,12 +370,16 @@ export const UpdateRequestStatus = async (req, res) => {
                 <li>Priority: ${request.priority}</li>
               </ul>
               
-              ${notes ? `
+              ${
+                notes
+                  ? `
                 <div class="notes">
                   <strong>Notes from Staff:</strong><br>
                   ${notes}
                 </div>
-              ` : ""}
+              `
+                  : ""
+              }
               
               ${status === "approved" ? "<p>Your request has been approved and will be processed soon.</p>" : ""}
               ${status === "rejected" ? "<p>We regret to inform you that your request could not be approved at this time.</p>" : ""}
@@ -367,19 +396,23 @@ export const UpdateRequestStatus = async (req, res) => {
         </html>
       `;
 
-      await sendEmail({
+      // Send email without awaiting - non-blocking
+      sendEmailInBackground({
         to: request.visitor.email,
         subject: `Service Request ${status.toUpperCase()} - ${request.service?.name || "Service"}`,
         html: emailHtml,
       });
-      console.log("Email sent to visitor:", request.visitor.email);
+      
+      console.log(`📧 Email queued for ${request.visitor.email}`);
     }
 
+    // Return success immediately
     res.json({
       success: true,
-      msg: `Request ${status} successfully and email sent to visitor`,
+      msg: `Request ${status} successfully. ${request.visitor?.email ? 'A notification email will be sent to the visitor.' : ''}`,
       request,
     });
+    
   } catch (err) {
     console.error("Error updating request status:", err);
     res.status(500).json({
