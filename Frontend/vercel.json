@@ -37,9 +37,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_API_URL": "https://reception-management-system.onrender.com/api/",
-    "VITE_SOCKET_URL": "https://reception-management-system.onrender.com"
-  }
+  ]
 }

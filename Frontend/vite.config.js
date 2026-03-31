@@ -19,14 +19,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          icons: ['react-icons'],
-          utils: ['axios', 'socket.io-client', 'react-hot-toast']
-        }
-      }
-    }
   }
 })
