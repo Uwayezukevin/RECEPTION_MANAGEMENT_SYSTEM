@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 class APIService {
   constructor() {
     this.api = axios.create({
-      baseURL: "https://reception-management-system-pbrh.vercel.app/api",
+      baseURL: "https://reception-management-system-backend-ebon.vercel.app/api",
       headers: {
         "Content-Type": "application/json",
       },
@@ -75,7 +75,7 @@ class APIService {
       try {
         const userData = JSON.parse(user);
         if (userData.token) {
-          this.socket = io("https://reception-management-system-pbrh.vercel.app/", {
+          this.socket = io("https://reception-management-system-backend-ebon.vercel.app/", {
             auth: { token: userData.token },
             transports: ['websocket', 'polling'],
             withCredentials: true
