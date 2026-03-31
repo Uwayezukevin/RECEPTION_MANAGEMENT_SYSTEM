@@ -97,7 +97,7 @@ const ReceptionistDashboard = () => {
       
       setRequests(filteredRequests);
       setVisitors(visitorsRes.data.visitors || []);
-      setServices(servicesRes.data.services || []);
+      setServices(servicesRes.data.Services || []);
 
       const pending = requestsRes.data.requests?.filter((r) => r.status === "pending").length || 0;
       const today = new Date().toDateString();
