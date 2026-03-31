@@ -97,7 +97,7 @@ const ReceptionistDashboard = () => {
       
       setRequests(filteredRequests);
       setVisitors(visitorsRes.data.visitors || []);
-      setServices(servicesRes.data.Services || []);
+      setServices(servicesRes.data.services || []);
 
       const pending = requestsRes.data.requests?.filter((r) => r.status === "pending").length || 0;
       const today = new Date().toDateString();
@@ -546,7 +546,7 @@ const ReceptionistDashboard = () => {
                 <p className="text-white/70 text-xs sm:text-sm">Visitors currently checked in</p>
               </div>
               <button
-                onClick={() => navigate("/visitor-form")}
+                onClick={() => navigate("/visitor-registration")}
                 className="bg-gradient-to-r from-primary-500 to-secondary-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:from-primary-600 hover:to-secondary-600 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg text-sm sm:text-base w-full sm:w-auto justify-center"
               >
                 <FaPlusCircle />
