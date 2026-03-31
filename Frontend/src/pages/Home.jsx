@@ -61,9 +61,17 @@ const Home = () => {
               efficient, and completely digital.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <div className="">
-                <img src={QRCode} className="w-20 h-20 object-cover" alt="Scan this to register as visitor" />
-                <span>Scan to continue as a visitor</span>
+              <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg hover:scale-105 transition-all duration-300">
+                <img
+                  src={QRCode}
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain mb-2"
+                  alt="Scan QR code"
+                />
+
+                <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">
+                  Scan to continue <br className="hidden sm:block" />
+                  as a visitor
+                </span>
               </div>
               <Link
                 to="/login"
