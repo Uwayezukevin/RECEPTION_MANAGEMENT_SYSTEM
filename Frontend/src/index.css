@@ -1,4 +1,4 @@
-/* index.css - Updated with Richer Backgrounds */
+/* index.css - White and Blue Theme (No Gradient) */
 
 @import 'tailwindcss';
 
@@ -14,16 +14,16 @@
   --color-primary-800: #1e40af;
   --color-primary-900: #1e3a8a;
   
-  --color-secondary-50: #f5f3ff;
-  --color-secondary-100: #ede9fe;
-  --color-secondary-200: #ddd6fe;
-  --color-secondary-300: #c4b5fd;
-  --color-secondary-400: #a78bfa;
-  --color-secondary-500: #8b5cf6;
-  --color-secondary-600: #7c3aed;
-  --color-secondary-700: #6d28d9;
-  --color-secondary-800: #5b21b6;
-  --color-secondary-900: #4c1d95;
+  --color-secondary-50: #eff6ff;
+  --color-secondary-100: #dbeafe;
+  --color-secondary-200: #bfdbfe;
+  --color-secondary-300: #93c5fd;
+  --color-secondary-400: #60a5fa;
+  --color-secondary-500: #3b82f6;
+  --color-secondary-600: #2563eb;
+  --color-secondary-700: #1d4ed8;
+  --color-secondary-800: #1e40af;
+  --color-secondary-900: #1e3a8a;
   
   --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   --animate-spin-slow: spin 3s linear infinite;
@@ -32,19 +32,11 @@
 
 @layer base {
   body {
-    /* Darker, richer gradient background */
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #5b21b6 100%);
+    background: #ffffff;
     min-height: 100vh;
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  }
-  
-  /* Fallback for older browsers */
-  @supports not (background: linear-gradient(135deg, #1e1b4b 0%, #5b21b6 100%)) {
-    body {
-      background: #1e1b4b;
-    }
   }
   
   #root {
@@ -56,23 +48,23 @@
   }
   
   ::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.3);
+    background: #f1f1f1;
     border-radius: 4px;
   }
   
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.5);
+    background: #3b82f6;
     border-radius: 4px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: #2563eb;
   }
 }
 
 @layer components {
   .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #3b82f6;
     color: white;
     padding: 0.75rem 1.5rem;
     border-radius: 0.75rem;
@@ -81,17 +73,17 @@
     cursor: pointer;
     border: none;
     display: inline-block;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
   .btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    background: #2563eb;
+    transform: scale(1.02);
   }
   
   .btn-primary:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
   }
   
   .btn-primary:disabled {
@@ -101,21 +93,19 @@
   }
   
   .btn-secondary {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
-    color: white;
+    background: #f3f4f6;
+    color: #374151;
     padding: 0.75rem 1.5rem;
     border-radius: 0.75rem;
     font-weight: 600;
     transition: all 0.2s ease;
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid #e5e7eb;
     display: inline-block;
   }
   
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: #e5e7eb;
   }
   
   .input-field {
@@ -131,46 +121,46 @@
   
   .input-field:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
   
-  /* Richer, more visible card backgrounds */
   .card {
     background: white;
-    border-radius: 1.5rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
   }
   
   .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 25px 30px -12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
   }
   
-  /* Dark glass card for overlays */
+  /* Blue card for highlights */
+  .card-primary {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 1rem;
+    padding: 1.5rem;
+  }
+  
+  /* Dark glass card (for overlays if needed) */
   .dark-glass-card {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
-    border-radius: 1.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: white;
   }
   
-  /* Light glass card (more visible) */
-  .light-glass-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  }
-  
-  /* Solid card for maximum visibility */
+  /* Solid card */
   .solid-card {
     background: white;
     border-radius: 1rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
   }
 }
 
@@ -193,27 +183,12 @@
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(-25%);
-    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
-  }
-  50% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  }
-}
-
 .animate-spin {
   animation: spin 1s linear infinite;
 }
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-bounce {
-  animation: bounce 1s infinite;
 }
 
 /* Utility classes */
@@ -247,79 +222,17 @@
   transition-duration: 300ms;
 }
 
-/* Gradient text utility */
-.gradient-text {
-  background: linear-gradient(135deg, #fbbf24 0%, #ec489a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Blue text utility */
+.text-primary {
+  color: #3b82f6;
 }
 
-/* ==================== FALLBACKS FOR OLDER BROWSERS ==================== */
-/* These ensure your Sony Xperia shows proper colors */
-
-/* Solid background fallback for gradients */
-.bg-gradient-to-br,
-.bg-gradient-to-r,
-.bg-gradient-to-l,
-.bg-gradient-to-t {
-  background: #1e1b4b !important;
+/* Blue background utility */
+.bg-primary-light {
+  background-color: #eff6ff;
 }
 
-/* Fix backdrop blur for older browsers */
-.backdrop-blur-lg,
-.backdrop-blur-md,
-.backdrop-blur-sm {
-  background: rgba(0, 0, 0, 0.8) !important;
-  backdrop-filter: none !important;
-}
-
-/* Ensure white backgrounds are solid white */
-.bg-white {
-  background-color: #ffffff24 !important;
-}
-
-.bg-white\/10,
-.bg-white\/20,
-.bg-white\/30,
-.bg-white\/50,
-.bg-white\/70,
-.bg-white\/90 {
-  background-color: #ffffff24 !important;
-}
-
-/* Fix text colors */
-.text-white {
-  color: #ffffff !important;
-}
-
-.text-gray-800,
-.text-gray-700,
-.text-gray-600 {
-  color: #1f2937 !important;
-}
-
-/* Ensure buttons are visible */
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Fix card backgrounds */
-.rounded-xl,
-.rounded-lg,
-.rounded-2xl {
-  background-color: #ffffff24;
-}
-
-/* Main container solid background fallback */
-.min-h-screen {
-  background: #1e1b4b;
-}
-
-/* For browsers that support gradients, they'll get the gradient */
-@supports (background: linear-gradient(135deg, #1e1b4b 0%, #5b21b6 100%)) {
-  .min-h-screen {
-    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #5b21b6 100%);
-  }
+/* Border blue utility */
+.border-primary {
+  border-color: #3b82f6;
 }
