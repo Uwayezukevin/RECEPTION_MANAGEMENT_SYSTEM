@@ -1,5 +1,9 @@
 // utils/emailService.js
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Force IPv4 globally
+dns.setDefaultResultOrder('ipv4first');
 
 // Create transporter with Render-optimized settings
 const createTransporter = () => {
@@ -17,53 +21,32 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
+    // Force IPv4 and prevent IPv6 attempts
+    family: 4,
+    localAddress: '0.0.0.0', // Force IPv4
     // Render-specific settings
-    connectionTimeout: 30000,  // Increase timeout for Render
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-    family: 4,  // Force IPv4
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
     tls: {
-      rejectUnauthorized: false  // Sometimes needed on Render
-    },
-    // Add debug for troubleshooting
-    debug: false
+      rejectUnauthorized: false
+    }
   });
 };
 
 let transporter = createTransporter();
-let connectionAttempts = 0;
-const MAX_RETRIES = 3;
 
-// Attempt to verify connection with retries
-const verifyConnection = async () => {
-  if (!transporter) return;
-  
-  try {
-    await transporter.verify();
-    console.log('✅ Email service connected successfully');
-    connectionAttempts = 0;
-  } catch (error) {
-    console.log(`⚠️ Email service connection attempt ${connectionAttempts + 1} failed:`, error.message);
-    connectionAttempts++;
-    
-    if (connectionAttempts < MAX_RETRIES) {
-      console.log(`🔄 Retrying email connection in 5 seconds...`);
-      setTimeout(verifyConnection, 5000);
-    } else {
-      console.log('❌ Email service unavailable after multiple attempts. Emails will be queued for later.');
-    }
-  }
-};
-
-// Start connection verification
+// Verify connection (don't retry, just log)
 if (transporter) {
-  verifyConnection();
+  transporter.verify()
+    .then(() => console.log('✅ Email service connected successfully'))
+    .catch((err) => console.log('⚠️ Email service will use fallback:', err.message));
 }
 
 export const sendEmail = async ({ to, subject, html, text }) => {
   if (!transporter) {
     console.log(`📧 Email skipped: transporter not configured`);
-    return { success: false, skipped: true, reason: 'no transporter' };
+    return null;
   }
 
   if (!to || !to.includes('@')) {
@@ -84,12 +67,39 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     console.log(`✅ Email sent successfully to ${to}`);
     return info;
   } catch (error) {
-    console.log(`⚠️ Email failed: ${error.message}`);
-    
-    // Log more details for debugging
-    if (error.code === 'ECONNECTION' || error.code === 'ETIMEDOUT') {
-      console.log(`   Connection issue. Will retry on next request.`);
+    // Don't log ENETUNREACH errors as errors, they're expected IPv6 fallback
+    if (error.code === 'ENETUNREACH' || error.code === 'ETIMEDOUT') {
+      console.log(`📧 Retrying email with IPv4...`);
+      // Try one more time with explicit settings
+      try {
+        const fallbackTransporter = nodemailer.createTransport({
+          host: process.env.EMAIL_HOST,
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          family: 4,
+          tls: { rejectUnauthorized: false }
+        });
+        
+        const info = await fallbackTransporter.sendMail({
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+          to,
+          subject,
+          text: text || html?.replace(/<[^>]*>/g, '') || '',
+          html
+        });
+        console.log(`✅ Email sent successfully to ${to} (IPv4 fallback)`);
+        return info;
+      } catch (fallbackError) {
+        console.log(`⚠️ Email failed: ${fallbackError.message}`);
+        return null;
+      }
     }
+    
+    console.log(`⚠️ Email failed: ${error.message}`);
     return null;
   }
 };
@@ -182,8 +192,8 @@ export const sendRequestStatusEmail = async (visitor, request, status, notes) =>
       html
     });
     
-    if (result?.skipped) {
-      console.log(`📧 Email queued for later: ${visitor.email}`);
+    if (result) {
+      console.log(`✅ Status email processed for ${visitor.email}`);
     }
     return result;
   } catch (error) {
