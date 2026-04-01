@@ -34,7 +34,7 @@ router.put('/visitors/:id/checkout',  visitorController.CheckOutVisitor);
 
 // Request routes (protected)
 router.post('/requests/:visitorId', requestController.CreateRequest);
-router.get('/requests', authenticate, authorizeReceptionist, requestController.GetAllRequests);
+router.get('/requests', requestController.GetAllRequests);
 router.get('/requests/dashboard-stats', authenticate, authorizeReceptionist, requestController.GetDashboardStats);
 router.get('/requests/visitor/:visitorId', authenticate, requestController.GetVisitorRequests);
 router.get('/requests/:id', authenticate, requestController.GetRequestById);
