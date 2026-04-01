@@ -4,79 +4,47 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/src/assets/image.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#3b82f6" />
     <title>RECEPTION MANAGEMENT SYSTEM</title>
     
-    <!-- Fallback styles for older browsers (like Sony Xperia SO-01J) -->
+    <!-- Minimal fallback - NO conflicting styles -->
     <style>
-      /* Solid color fallback that works on all devices */
+      /* Only essential fallback - no colors that conflict */
       body {
         margin: 0;
         padding: 0;
-        background: #2563eb;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
       
       #root {
         min-height: 100vh;
       }
       
-      /* Ensure content is visible while React loads */
       .loading-fallback {
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        background: #2563eb;
-        color: white;
         text-align: center;
         padding: 20px;
-      }
-      
-      /* Fix for older browsers that don't support gradients */
-      .no-gradient {
-        background: #2563eb !important;
-      }
-      
-      /* Ensure white backgrounds show properly */
-      .force-white-bg {
-        background-color: #ffffff !important;
       }
     </style>
   </head>
   <body>
-    <!-- Loading fallback that shows while React loads -->
     <div id="root">
       <div class="loading-fallback">
         <div>
-          <h2 style="margin: 0 0 8px 0;">Loading Reception System</h2>
-          <p style="margin: 0; opacity: 0.8;">Please wait...</p>
+          <h2>Loading Reception System</h2>
+          <p>Please wait...</p>
         </div>
       </div>
     </div>
     
-    <!-- Fallback for JavaScript disabled -->
     <noscript>
-      <div style="
-        min-height: 100vh;
-        background: #2563eb;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        font-family: Arial, sans-serif;
-      ">
-        <div style="
-          background: white;
-          border-radius: 12px;
-          padding: 30px;
-          max-width: 400px;
-          text-align: center;
-          color: #333;
-        ">
-          <h2 style="margin: 0 0 8px 0;">JavaScript Required</h2>
-          <p style="margin: 0 0 16px 0; color: #666;">Please enable JavaScript to use this application.</p>
-          <p style="margin: 0; font-size: 12px; color: #999;">If you're having trouble, try using Chrome or Firefox browser.</p>
+      <div style="min-height: 100vh; background: #f0f2f5; display: flex; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: white; border-radius: 12px; padding: 30px; max-width: 400px; text-align: center;">
+          <h2>JavaScript Required</h2>
+          <p>Please enable JavaScript to use this application.</p>
         </div>
       </div>
     </noscript>
