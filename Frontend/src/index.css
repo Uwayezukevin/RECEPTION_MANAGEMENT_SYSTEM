@@ -98,7 +98,7 @@
   }
   
   .card {
-    background: rgba(255, 255, 255, 0.84);
+    background: white;
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
@@ -122,7 +122,7 @@
 .backdrop-blur-lg,
 .backdrop-blur-md,
 .backdrop-blur-sm {
-  background: rgba(255, 255, 255, 0.521) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: none !important;
 }
 
@@ -134,7 +134,7 @@
 .bg-white\/10,
 .bg-white\/20,
 .bg-white\/30 {
-  background-color: rgba(255, 255, 255, 0.491) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
 }
 
 /* Fix text colors */
@@ -162,7 +162,7 @@ button:disabled {
 .rounded-xl,
 .rounded-lg,
 .rounded-2xl {
-  background-color: #ffffff43;
+  background-color: #ffffff;
 }
 
 /* Ensure the main container has solid background */
