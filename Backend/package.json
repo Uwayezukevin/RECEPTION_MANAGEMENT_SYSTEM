@@ -17,6 +17,7 @@
     "node": "24.x"
   },
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dns": "^0.2.2",
