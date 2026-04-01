@@ -1,7 +1,26 @@
+/* index.css - Clean Version */
+
 @import 'tailwindcss';
 
 @theme {
-@@ -22,97 +24,148 @@
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  
+  --color-secondary-50: #f5f3ff;
+  --color-secondary-100: #ede9fe;
+  --color-secondary-200: #ddd6fe;
+  --color-secondary-300: #c4b5fd;
+  --color-secondary-400: #a78bfa;
+  --color-secondary-500: #8b5cf6;
+  --color-secondary-600: #7c3aed;
   --color-secondary-700: #6d28d9;
   --color-secondary-800: #5b21b6;
   --color-secondary-900: #4c1d95;
@@ -13,134 +32,180 @@
 
 @layer base {
   body {
-    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700), var(--color-secondary-800));
-    /* Solid fallback for older browsers */
     background: #2563eb;
     background: linear-gradient(135deg, #2563eb, #1d4ed8, #5b21b6);
     min-height: 100vh;
     margin: 0;
     padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   }
-
-  /* Hide scrollbar styling on older browsers */
+  
+  #root {
+    min-height: 100vh;
+  }
+  
   ::-webkit-scrollbar {
     width: 8px;
   }
-
+  
   ::-webkit-scrollbar-track {
-    background: var(--color-gray-100);
-    border-radius: 9999px;
     background: #f3f4f6;
+    border-radius: 4px;
   }
-
+  
   ::-webkit-scrollbar-thumb {
-    background: var(--color-primary-500);
-    border-radius: 9999px;
+    background: #3b82f6;
+    border-radius: 4px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary-600);
-    background: #3b82f6;
-    border-radius: 4px;
+    background: #2563eb;
   }
 }
 
 @layer components {
   .btn-primary {
-    background: linear-gradient(135deg, var(--color-primary-500), var(--color-secondary-500));
     background: #3b82f6;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
     color: white;
     padding: 0.5rem 1.5rem;
     border-radius: 0.5rem;
-    transition: all 0.2s;
-    transform: scale(1);
+    transition: all 0.2s ease;
     cursor: pointer;
     border: none;
     display: inline-block;
   }
-
+  
   .btn-primary:hover {
     transform: scale(1.05);
-    background: linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600));
+    background: #2563eb;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
   }
   
   .btn-primary:focus {
     outline: none;
-    ring: 2px solid var(--color-primary-500);
-    ring-offset: 2px;
+    box-shadow: 0 0 0 2px #3b82f6, 0 0 0 4px rgba(59, 130, 246, 0.2);
   }
   
   .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    background: #2563eb;
+    transform: none;
   }
-
+  
   .btn-secondary {
-    background: var(--color-gray-200);
-    color: var(--color-gray-700);
     background: #e5e7eb;
     color: #374151;
     padding: 0.5rem 1.5rem;
     border-radius: 0.5rem;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     cursor: pointer;
     border: none;
     display: inline-block;
   }
-
+  
   .btn-secondary:hover {
-    background: var(--color-gray-300);
     background: #d1d5db;
   }
-
+  
   .input-field {
     width: 100%;
     padding: 0.5rem 1rem;
-    border: 1px solid var(--color-gray-300);
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
-    transition: all 0.2s;
     box-sizing: border-box;
+    transition: all 0.2s ease;
   }
-
+  
   .input-field:focus {
     outline: none;
-    ring: 2px solid var(--color-primary-500);
-    border-color: transparent;
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
   }
-
+  
   .card {
     background: white;
     border-radius: 0.75rem;
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-    transition: box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
   
   .card:hover {
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   }
 }
 
-/* ==================== FIXES FOR SONY XPERIA SO-01J ==================== */
-/* These styles ensure colors show properly on older Android */
+/* Animation keyframes */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-/* Force solid backgrounds where gradients might fail */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Utility classes for text truncation */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Hover scale effect */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+/* Transition utilities */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* ==================== FALLBACKS FOR OLDER BROWSERS ==================== */
+/* These ensure your Sony Xperia shows proper colors */
+
+/* Solid background fallback */
 .bg-gradient-to-br,
-.bg-gradient-to-r,
-.from-primary-500,
-.from-primary-600,
-.to-secondary-500,
-.to-secondary-600 {
+.bg-gradient-to-r {
   background: #2563eb !important;
   background: linear-gradient(135deg, #2563eb, #5b21b6) !important;
 }
 
-/* Fix backdrop blur - show solid background instead */
+/* Fix backdrop blur - use solid white instead */
 .backdrop-blur-lg,
 .backdrop-blur-md,
 .backdrop-blur-sm {
@@ -148,14 +213,17 @@
   backdrop-filter: none !important;
 }
 
-/* Ensure white backgrounds are truly white */
+/* Ensure white backgrounds are solid white */
 .bg-white {
   background-color: #ffffff !important;
 }
 
 .bg-white\/10,
 .bg-white\/20,
-.bg-white\/30 {
+.bg-white\/30,
+.bg-white\/50,
+.bg-white\/70,
+.bg-white\/90 {
   background-color: rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -165,13 +233,9 @@
 }
 
 .text-gray-800,
-.text-gray-700 {
+.text-gray-700,
+.text-gray-600 {
   color: #1f2937 !important;
-}
-
-/* Fix hover effects */
-.hover\:scale-105:hover {
-  transform: scale(1.05);
 }
 
 /* Ensure buttons are visible */
@@ -187,7 +251,7 @@ button:disabled {
   background-color: #ffffff;
 }
 
-/* Ensure the main container has solid background */
+/* Main container solid background */
 .min-h-screen {
   background: #2563eb;
 }
