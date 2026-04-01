@@ -1,4 +1,4 @@
-// src/service/api.js (update the interceptors)
+// src/service/api.js
 import axios from "axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 class APIService {
   constructor() {
     this.api = axios.create({
-      baseURL: "https://reception-management-system.onrender.com/api/",
+      baseURL: "https://reception-management-system-pbrh.vercel.app/api",
       headers: {
         "Content-Type": "application/json",
       },
@@ -15,49 +15,69 @@ class APIService {
     this.socket = null;
     this.notificationCallbacks = [];
     
-    // Add token to requests
+    // Request interceptor - only add token for protected routes
     this.api.interceptors.request.use((config) => {
-      // Skip auth for public endpoints
-      const publicEndpoints = ['/visitors', '/auth/login', '/auth/register', '/services'];
-      const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint));
+      // List of public endpoints that don't need authentication
+      const publicEndpoints = [
+        '/auth/login',
+        '/auth/register',
+        '/services',
+      ];
       
+      // Check if this is a visitor request creation (public)
+      const isVisitorRequest = config.method === 'post' && 
+                               config.url?.match(/\/requests\/[a-f0-9]{24}$/);
+      
+      // Check if this is a visitor getting request by ID (public)
+      const isGetRequestById = config.method === 'get' && 
+                               config.url?.match(/\/requests\/[a-f0-9]{24}$/);
+      
+      // Check if this is visitor registration
+      const isVisitorRegistration = config.method === 'post' && 
+                                    config.url === '/visitors';
+      
+      // Check if this is getting visitor requests (protected for staff, but visitors can view their own)
+      const isVisitorRequests = config.method === 'get' && 
+                                config.url?.includes('/requests/visitor/');
+      
+      const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint)) ||
+                       isVisitorRequest ||
+                       isGetRequestById ||
+                       isVisitorRegistration;
+      
+      // Only add token for non-public endpoints
       if (!isPublic) {
         const user = localStorage.getItem("user");
         if (user) {
           try {
             const userData = JSON.parse(user);
             if (userData.token) {
-              console.log("Adding token to request:", config.url);
               config.headers.Authorization = `Bearer ${userData.token}`;
-            } else {
-              console.log("No token found for request:", config.url);
             }
           } catch (error) {
             console.error("Error parsing user data:", error);
           }
-        } else {
-          console.log("No user in localStorage for request:", config.url);
         }
       }
+      
       return config;
     });
     
-    // Handle token expiration
+    // Response interceptor
     this.api.interceptors.response.use(
       (response) => {
-        console.log("Response from:", response.config.url, "Status:", response.status);
         return response;
       },
       (error) => {
-        console.error("Response error:", error.response?.status, error.response?.data);
-        
         // Only redirect to login for 401 on protected endpoints
         if (error.response?.status === 401) {
-          const isAuthEndpoint = error.config?.url?.includes('/auth/') || 
-                                 error.config?.url?.includes('/requests/') ||
-                                 error.config?.url?.includes('/notifications/');
+          const url = error.config?.url || '';
+          const isProtected = !url.includes('/auth/') && 
+                              !url.includes('/visitors') &&
+                              !url.includes('/services') &&
+                              !url.includes('/requests/');
           
-          if (isAuthEndpoint) {
+          if (isProtected) {
             localStorage.removeItem("user");
             window.location.href = "/login";
             toast.error("Session expired. Please login again.");
@@ -75,7 +95,7 @@ class APIService {
       try {
         const userData = JSON.parse(user);
         if (userData.token) {
-          this.socket = io("https://reception-management-system.onrender.com", {
+          this.socket = io("https://reception-management-system-pbrh.vercel.app/", {
             auth: { token: userData.token },
             transports: ['websocket', 'polling'],
             withCredentials: true
@@ -95,38 +115,11 @@ class APIService {
           
           this.socket.on("notification", (notification) => {
             this.notificationCallbacks.forEach(cb => cb(notification));
-            toast.custom((t) => (
-              <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
-                <div className="flex-1 w-0 p-4">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0 pt-0.5">
-                      <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                        <span className="text-primary-600 text-lg">🔔</span>
-                      </div>
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                      <p className="mt-1 text-sm text-gray-500">{notification.message}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex border-l border-gray-200">
-                  <button
-                    onClick={() => toast.dismiss(t.id)}
-                    className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-primary-600 hover:text-primary-500 focus:outline-none"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            ));
           });
         }
       } catch (error) {
         console.error("Error initializing socket:", error);
       }
-      
-      return this.socket;
     }
     return this.socket;
   }
@@ -141,12 +134,12 @@ class APIService {
     return this.socket;
   }
   
-  // Auth endpoints
+  // ==================== AUTH ENDPOINTS ====================
   register = (data) => this.api.post("/auth/register", data);
   login = (data) => this.api.post("/auth/login", data);
   getCurrentUser = () => this.api.get("/auth/me");
   
-  // Visitor endpoints
+  // ==================== VISITOR ENDPOINTS ====================
   createVisitor = (data) => {
     console.log("Creating visitor with data:", data);
     return this.api.post("/visitors", data);
@@ -157,27 +150,37 @@ class APIService {
   getVisitorStats = () => this.api.get("/visitors/stats");
   checkoutVisitor = (id) => this.api.put(`/visitors/${id}/checkout`);
   
-  // Service endpoints
+  // ==================== SERVICE ENDPOINTS ====================
   getServices = () => this.api.get("/services");
   createService = (data) => this.api.post("/services", data);
   updateService = (id, data) => this.api.put(`/services/${id}`, data);
   
-  // Request endpoints
+  // ==================== REQUEST ENDPOINTS ====================
+  // Public: Visitor creates a request
   createRequest = (visitorId, data) => {
-    const user = localStorage.getItem("user");
-    if (!user) {
-      return this.api.post(`/requests/${visitorId}`, data);
-    }
+    console.log("Creating request for visitor:", visitorId);
     return this.api.post(`/requests/${visitorId}`, data);
   };
   
+  // Public: Get request by ID (for status page)
+  getRequestById = (id) => {
+    console.log("Getting request by ID:", id);
+    return this.api.get(`/requests/${id}`);
+  };
+  
+  // Protected: Get all requests (staff only)
   getAllRequests = (params) => this.api.get("/requests", { params });
-  getRequestById = (id) => this.api.get(`/requests/${id}`);
+  
+  // Protected: Update request status (staff only)
   updateRequestStatus = (id, data) => this.api.put(`/requests/${id}/status`, data);
+  
+  // Protected: Get dashboard stats (staff only)
   getDashboardStats = () => this.api.get("/requests/dashboard-stats");
+  
+  // Protected: Get visitor requests (can be used by staff or visitor with token)
   getVisitorRequests = (visitorId) => this.api.get(`/requests/visitor/${visitorId}`);
   
-  // Notification endpoints
+  // ==================== NOTIFICATION ENDPOINTS ====================
   getNotifications = (unreadOnly = false) => 
     this.api.get(`/notifications?unreadOnly=${unreadOnly}`);
   markNotificationAsRead = (id) => this.api.put(`/notifications/${id}/read`);
