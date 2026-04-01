@@ -107,7 +107,7 @@
 /* ==================== FIXES FOR SONY XPERIA SO-01J ==================== */
 /* These styles ensure colors show properly on older Android */
 
-/* Force solid backgrounds where gradients might ail */
+/* Force solid backgrounds where gradients might fail */
 .bg-gradient-to-br,
 .bg-gradient-to-r,
 .from-primary-500,
