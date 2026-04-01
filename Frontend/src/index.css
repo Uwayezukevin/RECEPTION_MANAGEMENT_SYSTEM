@@ -276,7 +276,7 @@
 
 /* Ensure white backgrounds are solid white */
 .bg-white {
-  background-color: #ffffff65 !important;
+  background-color: #ffffff24 !important;
 }
 
 .bg-white\/10,
@@ -285,12 +285,12 @@
 .bg-white\/50,
 .bg-white\/70,
 .bg-white\/90 {
-  background-color: rgba(255, 255, 255, 0.47) !important;
+  background-color: #ffffff24 !important;
 }
 
 /* Fix text colors */
 .text-white {
-  color: #ffffff7b !important;
+  color: #ffffff !important;
 }
 
 .text-gray-800,
@@ -309,7 +309,7 @@ button:disabled {
 .rounded-xl,
 .rounded-lg,
 .rounded-2xl {
-  background-color: #ffffff88;
+  background-color: #ffffff24;
 }
 
 /* Main container solid background fallback */
