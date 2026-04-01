@@ -1,4 +1,4 @@
-// src/service/api.js
+// src/service/api.js - Add visitor socket support
 import axios from "axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
@@ -13,39 +13,22 @@ class APIService {
     });
     
     this.socket = null;
+    this.visitorSocket = null;
     this.notificationCallbacks = [];
+    this.requestUpdateCallbacks = [];
     
-    // Request interceptor - only add token for protected routes
+    // Request interceptor
     this.api.interceptors.request.use((config) => {
-      // List of public endpoints that don't need authentication
-      const publicEndpoints = [
-        '/auth/login',
-        '/auth/register',
-        '/services',
-      ];
-      
-      // Check if this is a visitor request creation (public)
-      const isVisitorRequest = config.method === 'post' && 
-                               config.url?.match(/\/requests\/[a-f0-9]{24}$/);
-      
-      // Check if this is a visitor getting request by ID (public)
-      const isGetRequestById = config.method === 'get' && 
-                               config.url?.match(/\/requests\/[a-f0-9]{24}$/);
-      
-      // Check if this is visitor registration
-      const isVisitorRegistration = config.method === 'post' && 
-                                    config.url === '/visitors';
-      
-      // Check if this is getting visitor requests (protected for staff, but visitors can view their own)
-      const isVisitorRequests = config.method === 'get' && 
-                                config.url?.includes('/requests/visitor/');
+      const publicEndpoints = ['/auth/login', '/auth/register', '/services'];
+      const isVisitorRequest = config.method === 'post' && config.url?.match(/\/requests\/[a-f0-9]{24}$/);
+      const isGetRequestById = config.method === 'get' && config.url?.match(/\/requests\/[a-f0-9]{24}$/);
+      const isVisitorRegistration = config.method === 'post' && config.url === '/visitors';
       
       const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint)) ||
                        isVisitorRequest ||
                        isGetRequestById ||
                        isVisitorRegistration;
       
-      // Only add token for non-public endpoints
       if (!isPublic) {
         const user = localStorage.getItem("user");
         if (user) {
@@ -59,17 +42,13 @@ class APIService {
           }
         }
       }
-      
       return config;
     });
     
     // Response interceptor
     this.api.interceptors.response.use(
-      (response) => {
-        return response;
-      },
+      (response) => response,
       (error) => {
-        // Only redirect to login for 401 on protected endpoints
         if (error.response?.status === 401) {
           const url = error.config?.url || '';
           const isProtected = !url.includes('/auth/') && 
@@ -88,7 +67,59 @@ class APIService {
     );
   }
   
-  // Initialize WebSocket connection for staff
+  // Initialize WebSocket for visitors (to get real-time request updates)
+  initVisitorSocket(requestId) {
+    if (this.visitorSocket) {
+      this.visitorSocket.disconnect();
+    }
+    
+    this.visitorSocket = io("https://reception-management-system.onrender.com/", {
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      query: { requestId: requestId }
+    });
+    
+    this.visitorSocket.on("connect", () => {
+      console.log("Visitor WebSocket connected for request:", requestId);
+      // Join room for this specific request
+      this.visitorSocket.emit("join-request-room", requestId);
+    });
+    
+    this.visitorSocket.on("disconnect", () => {
+      console.log("Visitor WebSocket disconnected");
+    });
+    
+    this.visitorSocket.on("connect_error", (error) => {
+      console.log("Socket connection error:", error.message);
+    });
+    
+    // Listen for request status updates
+    this.visitorSocket.on("request-updated", (data) => {
+      console.log("Request update received:", data);
+      this.requestUpdateCallbacks.forEach(cb => cb(data));
+    });
+    
+    return this.visitorSocket;
+  }
+  
+  // Register callback for request updates
+  onRequestUpdate(callback) {
+    this.requestUpdateCallbacks.push(callback);
+    return () => {
+      const index = this.requestUpdateCallbacks.indexOf(callback);
+      if (index > -1) this.requestUpdateCallbacks.splice(index, 1);
+    };
+  }
+  
+  // Disconnect visitor socket
+  disconnectVisitorSocket() {
+    if (this.visitorSocket) {
+      this.visitorSocket.disconnect();
+      this.visitorSocket = null;
+    }
+  }
+  
+  // Staff WebSocket (existing)
   initSocket() {
     const user = localStorage.getItem("user");
     if (user && !this.socket) {
@@ -102,15 +133,11 @@ class APIService {
           });
           
           this.socket.on("connect", () => {
-            console.log("WebSocket connected");
+            console.log("Staff WebSocket connected");
           });
           
           this.socket.on("disconnect", () => {
-            console.log("WebSocket disconnected");
-          });
-          
-          this.socket.on("connect_error", (error) => {
-            console.log("Socket connection error:", error.message);
+            console.log("Staff WebSocket disconnected");
           });
           
           this.socket.on("notification", (notification) => {
@@ -124,65 +151,37 @@ class APIService {
     return this.socket;
   }
   
-  // Register notification callback for staff
   onNotification(callback) {
     this.notificationCallbacks.push(callback);
   }
   
-  // Get socket instance
   getSocket() {
     return this.socket;
   }
   
-  // ==================== AUTH ENDPOINTS ====================
+  // ==================== API ENDPOINTS ====================
   register = (data) => this.api.post("/auth/register", data);
   login = (data) => this.api.post("/auth/login", data);
   getCurrentUser = () => this.api.get("/auth/me");
   
-  // ==================== VISITOR ENDPOINTS ====================
-  createVisitor = (data) => {
-    console.log("Creating visitor with data:", data);
-    return this.api.post("/visitors", data);
-  };
-  
+  createVisitor = (data) => this.api.post("/visitors", data);
   getVisitors = (params) => this.api.get("/visitors", { params });
   getVisitorById = (id) => this.api.get(`/visitors/${id}`);
   getVisitorStats = () => this.api.get("/visitors/stats");
   checkoutVisitor = (id) => this.api.put(`/visitors/${id}/checkout`);
   
-  // ==================== SERVICE ENDPOINTS ====================
   getServices = () => this.api.get("/services");
   createService = (data) => this.api.post("/services", data);
   updateService = (id, data) => this.api.put(`/services/${id}`, data);
   
-  // ==================== REQUEST ENDPOINTS ====================
-  // Public: Visitor creates a request
-  createRequest = (visitorId, data) => {
-    console.log("Creating request for visitor:", visitorId);
-    return this.api.post(`/requests/${visitorId}`, data);
-  };
-  
-  // Public: Get request by ID (for status page)
-  getRequestById = (id) => {
-    console.log("Getting request by ID:", id);
-    return this.api.get(`/requests/${id}`);
-  };
-  
-  // Protected: Get all requests (staff only)
+  createRequest = (visitorId, data) => this.api.post(`/requests/${visitorId}`, data);
+  getRequestById = (id) => this.api.get(`/requests/${id}`);
   getAllRequests = (params) => this.api.get("/requests", { params });
-  
-  // Protected: Update request status (staff only)
   updateRequestStatus = (id, data) => this.api.put(`/requests/${id}/status`, data);
-  
-  // Protected: Get dashboard stats (staff only)
   getDashboardStats = () => this.api.get("/requests/dashboard-stats");
-  
-  // Protected: Get visitor requests (can be used by staff or visitor with token)
   getVisitorRequests = (visitorId) => this.api.get(`/requests/visitor/${visitorId}`);
   
-  // ==================== NOTIFICATION ENDPOINTS ====================
-  getNotifications = (unreadOnly = false) => 
-    this.api.get(`/notifications?unreadOnly=${unreadOnly}`);
+  getNotifications = (unreadOnly = false) => this.api.get(`/notifications?unreadOnly=${unreadOnly}`);
   markNotificationAsRead = (id) => this.api.put(`/notifications/${id}/read`);
   markAllNotificationsAsRead = () => this.api.put("/notifications/read-all");
 }

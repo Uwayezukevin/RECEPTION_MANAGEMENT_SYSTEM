@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import http from "http";
 import { Server } from "socket.io";
-import jwt from "jsonwebtoken"; // Add this import
+import jwt from "jsonwebtoken";
 import router from "./routes/routes.js";
 import Notification from "./models/Notification.js";
 import conn from "./config/db.js";
@@ -50,41 +50,66 @@ const io = new Server(server, {
   },
 });
 
-// Socket.io middleware for authentication
+// Socket.io middleware for authentication (for staff)
 io.use(async (socket, next) => {
   const token = socket.handshake.auth.token;
+  
+  // If no token, allow connection for visitors (they don't need auth)
   if (!token) {
-    console.log('Socket connection: No token provided');
-    return next(new Error("Authentication required"));
+    console.log('Socket connection: Visitor connection (no auth)');
+    socket.isVisitor = true;
+    return next();
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = decoded.id;
-    console.log('Socket authenticated for user:', socket.userId);
+    socket.isStaff = true;
+    console.log('Socket authenticated for staff user:', socket.userId);
     next();
   } catch (err) {
     console.log('Socket authentication error:', err.message);
-    next(new Error("Invalid token"));
+    // Don't reject - allow as visitor
+    socket.isVisitor = true;
+    next();
   }
 });
 
 // Socket.io connection handling
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.userId);
+  console.log("User connected:", socket.userId || "visitor");
 
-  // Join user's personal room
+  // Join user's personal room (for staff)
   if (socket.userId) {
     socket.join(`user_${socket.userId}`);
-    console.log(`User ${socket.userId} joined room user_${socket.userId}`);
+    console.log(`Staff ${socket.userId} joined room user_${socket.userId}`);
   }
 
+  // Handle joining request room for real-time updates (visitors)
+  socket.on("join-request-room", (requestId) => {
+    if (requestId) {
+      socket.join(`request_${requestId}`);
+      console.log(`Socket joined request room: request_${requestId}`);
+      
+      // Send confirmation back to client
+      socket.emit("joined-request-room", { requestId, success: true });
+    }
+  });
+
+  // Handle leaving request room
+  socket.on("leave-request-room", (requestId) => {
+    if (requestId) {
+      socket.leave(`request_${requestId}`);
+      console.log(`Socket left request room: request_${requestId}`);
+    }
+  });
+
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.userId);
+    console.log("User disconnected:", socket.userId || "visitor");
   });
 });
 
-// Middleware to emit notifications in real-time
+// Middleware to emit notifications and request updates in real-time
 app.use((req, res, next) => {
   req.io = io;
   next();
@@ -111,4 +136,7 @@ server.listen(PORT, () => {
   console.log(`API URL: http://localhost:${PORT}/api`);
   console.log(`WebSocket URL: ws://localhost:${PORT}`);
   console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`✅ Real-time updates enabled for requests`);
 });
+
+export default app;

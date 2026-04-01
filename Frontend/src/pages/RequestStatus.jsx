@@ -1,12 +1,11 @@
-// src/pages/RequestStatus.jsx
-import React, { useState, useEffect } from "react";
+// src/pages/RequestStatus.jsx - With Real-time Updates
+import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import {
   FaCheckCircle,
   FaTimesCircle,
   FaClock,
   FaEnvelope,
-  FaCalendarAlt,
   FaClipboardList,
   FaArrowLeft,
   FaSpinner,
@@ -15,6 +14,8 @@ import {
   FaUser,
   FaCopy,
   FaHome,
+  FaBell,
+  FaSync,
 } from "react-icons/fa";
 import { MdEmail, MdEvent } from "react-icons/md";
 import API from "../service/api";
@@ -26,16 +27,11 @@ const RequestStatus = () => {
   const [loading, setLoading] = useState(true);
   const [request, setRequest] = useState(null);
   const [visitor, setVisitor] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
   const requestId = searchParams.get('id');
 
-  useEffect(() => {
-    if (requestId) {
-      fetchRequestDetails(requestId);
-    } else {
-      setLoading(false);
-    }
-  }, [requestId]);
-
+  // Fetch request details
   const fetchRequestDetails = async (id) => {
     try {
       setLoading(true);
@@ -44,6 +40,7 @@ const RequestStatus = () => {
       if (response.data.success) {
         setRequest(response.data.request);
         setVisitor(response.data.request.visitor);
+        setLastUpdate(new Date());
       } else {
         toast.error("Request not found");
       }
@@ -54,6 +51,76 @@ const RequestStatus = () => {
       setLoading(false);
     }
   };
+
+  // Handle real-time request updates
+  const handleRequestUpdate = useCallback((updateData) => {
+    console.log("Real-time update received:", updateData);
+    
+    // Update the request with new data
+    if (updateData.request) {
+      setRequest(updateData.request);
+      setVisitor(updateData.request.visitor);
+    } else if (updateData.status) {
+      // If only status is provided, update the request status
+      setRequest(prev => ({
+        ...prev,
+        status: updateData.status,
+        notes: updateData.notes || prev.notes,
+        ...(updateData.status === 'approved' && { approvedAt: updateData.updatedAt || new Date() }),
+        ...(updateData.status === 'completed' && { completedAt: updateData.updatedAt || new Date() })
+      }));
+    }
+    
+    setLastUpdate(new Date());
+    
+    // Show toast notification
+    const statusMessages = {
+      approved: "✅ Your request has been approved!",
+      rejected: "❌ Your request has been rejected.",
+      completed: "🎉 Your request has been completed!"
+    };
+    
+    if (updateData.status && statusMessages[updateData.status]) {
+      toast.success(statusMessages[updateData.status], {
+        duration: 5000,
+        icon: '🔔'
+      });
+    } else if (updateData.request?.status && statusMessages[updateData.request.status]) {
+      toast.success(statusMessages[updateData.request.status], {
+        duration: 5000,
+        icon: '🔔'
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (requestId) {
+      fetchRequestDetails(requestId);
+    } else {
+      setLoading(false);
+    }
+  }, [requestId]);
+
+  // Setup WebSocket for real-time updates
+  useEffect(() => {
+    if (requestId && request) {
+      // Connect to WebSocket for this specific request
+      API.initVisitorSocket(requestId);
+      
+      // Register callback for request updates
+      const unsubscribe = API.onRequestUpdate(handleRequestUpdate);
+      
+      setIsConnected(true);
+      console.log("Real-time updates enabled for request:", requestId);
+      
+      // Cleanup on unmount
+      return () => {
+        unsubscribe();
+        API.disconnectVisitorSocket();
+        setIsConnected(false);
+      };
+    }
+  }, [requestId, request, handleRequestUpdate]);
 
   const getStatusIcon = (status) => {
     switch(status) {
@@ -96,11 +163,15 @@ const RequestStatus = () => {
     toast.success("Link copied to clipboard!");
   };
 
+  const handleRefresh = () => {
+    fetchRequestDetails(requestId);
+    toast.success("Refreshed!");
+  };
+
   if (!requestId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          {/* Logo in No Request ID State */}
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Logo" className="h-20 w-auto" />
           </div>
@@ -123,7 +194,6 @@ const RequestStatus = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
         <div className="text-center">
-          {/* Logo in Loading State */}
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Logo" className="h-20 w-auto animate-pulse" />
           </div>
@@ -138,7 +208,6 @@ const RequestStatus = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          {/* Logo in Request Not Found State */}
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Logo" className="h-20 w-auto" />
           </div>
@@ -169,14 +238,38 @@ const RequestStatus = () => {
             <FaArrowLeft />
             <span>Back to Home</span>
           </Link>
-          <button
-            onClick={copyLink}
-            className="inline-flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
-          >
-            <FaCopy />
-            <span>Copy Link</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            {/* Real-time indicator */}
+            {isConnected && (
+              <div className="flex items-center space-x-1 text-green-300 text-sm">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Live</span>
+              </div>
+            )}
+            <button
+              onClick={handleRefresh}
+              className="inline-flex items-center space-x-2 bg-white/20 text-white px-3 py-2 rounded-lg hover:bg-white/30 transition-colors"
+              title="Refresh"
+            >
+              <FaSync />
+            </button>
+            <button
+              onClick={copyLink}
+              className="inline-flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+            >
+              <FaCopy />
+              <span>Copy Link</span>
+            </button>
+          </div>
         </div>
+
+        {/* Last update timestamp */}
+        {lastUpdate && (
+          <div className="text-center mb-4 text-white/60 text-sm">
+            Last updated: {lastUpdate.toLocaleTimeString()}
+            {isConnected && " (auto-updates enabled)"}
+          </div>
+        )}
 
         {/* Main Card */}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
@@ -184,10 +277,9 @@ const RequestStatus = () => {
           <div className={`p-6 border-b ${getStatusColor(request.status)}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {/* Logo Badge */}
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full">
-                    <div className="w-full h-full rounded-full flex items-center justify-center ">
+                    <div className="w-full h-full rounded-full flex items-center justify-center">
                       <img 
                         src={logo} 
                         alt="Logo" 
@@ -339,21 +431,21 @@ const RequestStatus = () => {
               </div>
             </div>
 
-            {/* Email Note with Logo */}
-            <div className="bg-blue-50 rounded-lg p-4 text-center">
-              <div className="flex items-center justify-center space-x-3 mb-2">
-                <img src={logo} alt="Logo" className="h-8 w-auto" />
-                <FaEnvelope className="text-blue-500 text-xl" />
+            {/* Real-time Status Message */}
+            {isConnected && (
+              <div className="bg-green-50 rounded-lg p-4 text-center border border-green-200">
+                <div className="flex items-center justify-center space-x-3 mb-2">
+                  <FaBell className="text-green-500 text-xl" />
+                  <span className="text-green-700 font-medium">Real-time Updates Active</span>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
+                <p className="text-sm text-green-600">
+                  This page will update automatically when your request status changes.
+                </p>
               </div>
-              <p className="text-sm text-blue-700">
-                A confirmation email has been sent to <strong>{visitor?.email}</strong>
-              </p>
-              <p className="text-xs text-blue-600 mt-1">
-                You can also track your request using this page anytime
-              </p>
-            </div>
+            )}
 
-            {/* Footer with Logo */}
+            {/* Footer */}
             <div className="border-t border-gray-200 pt-4 mt-4">
               <div className="flex items-center justify-center space-x-2 text-gray-400 text-xs">
                 <img src={logo} alt="Logo" className="h-6 w-auto" />

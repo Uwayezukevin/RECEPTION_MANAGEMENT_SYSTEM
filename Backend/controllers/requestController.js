@@ -92,7 +92,7 @@ export const CreateRequest = async (req, res) => {
     await savedRequest.populate("visitor");
     await savedRequest.populate("service");
 
-    // Create notifications for receptionists (this is fast and should work)
+    // Create notifications for receptionists
     const staffUsers = await User.find({ role: "receptionist" });
 
     if (staffUsers.length > 0) {
@@ -115,7 +115,7 @@ export const CreateRequest = async (req, res) => {
       console.log(`✅ Created ${notifications.length} notifications for staff`);
     }
 
-    // Send confirmation email in background (non-blocking)
+    // Send confirmation email
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -160,14 +160,12 @@ export const CreateRequest = async (req, res) => {
       </html>
     `;
 
-    // Send email without awaiting - this prevents timeout from blocking the response
     sendEmailInBackground({
       to: visitor.email,
       subject: `Service Request Confirmation - ${serviceExists.name}`,
       html: emailHtml,
     });
 
-    // Return success immediately
     res.status(201).json({
       success: true,
       msg: "Service request submitted successfully! A confirmation email will be sent shortly.",
@@ -334,7 +332,42 @@ export const UpdateRequestStatus = async (req, res) => {
       console.log("Staff notification created");
     }
 
-    // Send email notification in background (non-blocking)
+    // ==================== REAL-TIME UPDATE ====================
+    // Emit to the specific request room (for visitors tracking this request)
+    if (req.io) {
+      const updateData = {
+        requestId: request._id,
+        status: status,
+        notes: notes || null,
+        updatedAt: new Date(),
+        request: {
+          _id: request._id,
+          status: status,
+          notes: notes || request.notes,
+          approvedAt: request.approvedAt,
+          completedAt: request.completedAt,
+          service: request.service,
+          eventDate: request.eventDate,
+          priority: request.priority,
+          visitorName: request.visitor?.fullName,
+          visitorEmail: request.visitor?.email
+        }
+      };
+      
+      // Send to visitors tracking this request
+      req.io.to(`request_${request._id}`).emit("request-updated", updateData);
+      console.log(`📡 Real-time update sent to request_${request._id} room`);
+      
+      // Also send to staff if they are in their personal room
+      req.io.to(`user_${req.user.id}`).emit("notification", {
+        title: `Request ${status.toUpperCase()}`,
+        message: `You ${status} request #${request._id.toString().slice(-6)}`,
+        type: `request_${status}`
+      });
+    }
+    // ==================== END REAL-TIME UPDATE ====================
+
+    // Send email notification in background
     if (request.visitor && request.visitor.email) {
       const emailHtml = `
         <!DOCTYPE html>
@@ -396,7 +429,6 @@ export const UpdateRequestStatus = async (req, res) => {
         </html>
       `;
 
-      // Send email without awaiting - non-blocking
       sendEmailInBackground({
         to: request.visitor.email,
         subject: `Service Request ${status.toUpperCase()} - ${request.service?.name || "Service"}`,
