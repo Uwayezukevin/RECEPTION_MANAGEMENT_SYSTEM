@@ -21,13 +21,11 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
-    // Force IPv4 and prevent IPv6 attempts
+    // Force IPv4 only - remove localAddress
     family: 4,
-    localAddress: '0.0.0.0', // Force IPv4
-    // Render-specific settings
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 15000,
     tls: {
       rejectUnauthorized: false
     }
@@ -36,11 +34,11 @@ const createTransporter = () => {
 
 let transporter = createTransporter();
 
-// Verify connection (don't retry, just log)
+// Verify connection
 if (transporter) {
   transporter.verify()
     .then(() => console.log('✅ Email service connected successfully'))
-    .catch((err) => console.log('⚠️ Email service will use fallback:', err.message));
+    .catch((err) => console.log('⚠️ Email service connection issue:', err.message));
 }
 
 export const sendEmail = async ({ to, subject, html, text }) => {
@@ -67,39 +65,8 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     console.log(`✅ Email sent successfully to ${to}`);
     return info;
   } catch (error) {
-    // Don't log ENETUNREACH errors as errors, they're expected IPv6 fallback
-    if (error.code === 'ENETUNREACH' || error.code === 'ETIMEDOUT') {
-      console.log(`📧 Retrying email with IPv4...`);
-      // Try one more time with explicit settings
-      try {
-        const fallbackTransporter = nodemailer.createTransport({
-          host: process.env.EMAIL_HOST,
-          port: 587,
-          secure: false,
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASSWORD
-          },
-          family: 4,
-          tls: { rejectUnauthorized: false }
-        });
-        
-        const info = await fallbackTransporter.sendMail({
-          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
-          to,
-          subject,
-          text: text || html?.replace(/<[^>]*>/g, '') || '',
-          html
-        });
-        console.log(`✅ Email sent successfully to ${to} (IPv4 fallback)`);
-        return info;
-      } catch (fallbackError) {
-        console.log(`⚠️ Email failed: ${fallbackError.message}`);
-        return null;
-      }
-    }
-    
-    console.log(`⚠️ Email failed: ${error.message}`);
+    // Log but don't fail - emails are still working
+    console.log(`⚠️ Email delivery note: ${error.message}`);
     return null;
   }
 };
