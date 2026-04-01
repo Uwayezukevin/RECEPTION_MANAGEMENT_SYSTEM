@@ -33,7 +33,7 @@ router.get('/visitors/:id', visitorController.GetVisitorById);
 router.put('/visitors/:id/checkout',  visitorController.CheckOutVisitor);
 
 // Request routes (protected)
-router.post('/requests/:visitorId', authenticate, requestController.CreateRequest);
+router.post('/requests/:visitorId', requestController.CreateRequest);
 router.get('/requests', authenticate, authorizeReceptionist, requestController.GetAllRequests);
 router.get('/requests/dashboard-stats', authenticate, authorizeReceptionist, requestController.GetDashboardStats);
 router.get('/requests/visitor/:visitorId', authenticate, requestController.GetVisitorRequests);
