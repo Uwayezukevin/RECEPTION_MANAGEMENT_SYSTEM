@@ -98,7 +98,7 @@
   }
   
   .card {
-    background: rgb(255, 255, 255)255, 255, 255, 0.84);
+    background: rgba(255, 255, 255, 0.84);
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
