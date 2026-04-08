@@ -1,4 +1,4 @@
-// src/service/api.js - Complete updated version
+// src/service/api.js - Complete updated version with Meeting support
 import axios from "axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
@@ -24,12 +24,18 @@ class APIService {
       const isGetRequestById = config.method === 'get' && config.url?.match(/\/requests\/[a-f0-9]{24}$/);
       const isVisitorRegistration = config.method === 'post' && config.url === '/visitors';
       const isVisitorWithRequest = config.method === 'post' && config.url === '/visitors-with-request';
+      const isMeetingSignIn = config.method === 'post' && config.url?.match(/\/meetings\/[a-f0-9]{24}\/participants$/);
+      const isGetMeeting = config.method === 'get' && config.url?.match(/\/meetings\/[a-f0-9]{24}$/);
+      const isGetParticipants = config.method === 'get' && config.url?.match(/\/meetings\/[a-f0-9]{24}\/participants$/);
       
       const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint)) ||
                        isVisitorRequest ||
                        isGetRequestById ||
                        isVisitorRegistration ||
-                       isVisitorWithRequest;
+                       isVisitorWithRequest ||
+                       isMeetingSignIn ||
+                       isGetMeeting ||
+                       isGetParticipants;
       
       if (!isPublic) {
         const user = localStorage.getItem("user");
@@ -56,7 +62,8 @@ class APIService {
           const isProtected = !url.includes('/auth/') && 
                               !url.includes('/visitors') &&
                               !url.includes('/services') &&
-                              !url.includes('/requests/');
+                              !url.includes('/requests/') &&
+                              !url.includes('/meetings/');
           
           if (isProtected) {
             localStorage.removeItem("user");
@@ -162,22 +169,26 @@ class APIService {
   }
   
   // ==================== API ENDPOINTS ====================
+  
+  // Auth & User
   register = (data) => this.api.post("/auth/register", data);
   login = (data) => this.api.post("/auth/login", data);
   getCurrentUser = () => this.api.get("/auth/me");
   
+  // Visitors
   createVisitor = (data) => this.api.post("/visitors", data);
-  createVisitorWithRequest = (data) => this.api.post("/visitors-with-request", data); // ✅ ADDED - FIXES THE ERROR
-  
+  createVisitorWithRequest = (data) => this.api.post("/visitors-with-request", data);
   getVisitors = (params) => this.api.get("/visitors", { params });
   getVisitorById = (id) => this.api.get(`/visitors/${id}`);
   getVisitorStats = () => this.api.get("/visitors/stats");
   checkoutVisitor = (id) => this.api.put(`/visitors/${id}/checkout`);
   
+  // Services
   getServices = () => this.api.get("/services");
   createService = (data) => this.api.post("/services", data);
   updateService = (id, data) => this.api.put(`/services/${id}`, data);
   
+  // Requests
   createRequest = (visitorId, data) => this.api.post(`/requests/${visitorId}`, data);
   getRequestById = (id) => this.api.get(`/requests/${id}`);
   getAllRequests = (params) => this.api.get("/requests", { params });
@@ -185,9 +196,29 @@ class APIService {
   getDashboardStats = () => this.api.get("/requests/dashboard-stats");
   getVisitorRequests = (visitorId) => this.api.get(`/requests/visitor/${visitorId}`);
   
+  // Notifications
   getNotifications = (unreadOnly = false) => this.api.get(`/notifications?unreadOnly=${unreadOnly}`);
   markNotificationAsRead = (id) => this.api.put(`/notifications/${id}/read`);
   markAllNotificationsAsRead = () => this.api.put("/notifications/read-all");
+  
+  // ==================== MEETING MANAGEMENT ====================
+  
+  // Meeting CRUD
+  createMeeting = (data) => this.api.post("/meetings", data);
+  getMeetings = (params) => this.api.get("/meetings", { params });
+  getMeetingById = (id) => this.api.get(`/meetings/${id}`);
+  updateMeetingStatus = (id, data) => this.api.put(`/meetings/${id}/status`, data);
+  
+  // Meeting Participants
+  addMeetingParticipant = (meetingId, data) => this.api.post(`/meetings/${meetingId}/participants`, data);
+  getMeetingParticipants = (meetingId) => this.api.get(`/meetings/${meetingId}/participants`);
+  
+  // Meeting Stats & Exports
+  getMeetingStats = () => this.api.get("/meetings/stats");
+  getUpcomingMeetings = () => this.api.get("/meetings/upcoming");
+  exportMeetingToPDF = (id) => this.api.get(`/meetings/${id}/export/pdf`, { responseType: 'blob' });
+  exportMeetingToExcel = (id) => this.api.get(`/meetings/${id}/export/excel`, { responseType: 'blob' });
+  exportMeetingToHTML = (id) => this.api.get(`/meetings/${id}/export/html`, { responseType: 'blob' });
 }
 
 const API = new APIService();

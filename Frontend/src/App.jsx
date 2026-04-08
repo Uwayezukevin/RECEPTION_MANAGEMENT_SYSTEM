@@ -11,6 +11,15 @@ import VisitorServiceRequest from "./pages/VisitorServiceRequest";
 import VisitorsList from "./pages/VisitorsList";
 import Home from "./pages/Home";
 import RequestStatus from "./pages/RequestStatus";
+
+// Meeting Module Imports
+import Meetings from "./pages/admin/Meetings";
+import CreateMeeting from "./pages/admin/CreateMeeting";
+
+// Admin Module Imports
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UsersList from "./pages/admin/UsersList";
+
 import "./index.css";
 
 const App = () => {
@@ -36,16 +45,18 @@ const App = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/visitor-service" element = {<VisitorServiceRequest />} />
+          <Route path="/visitor-service" element={<VisitorServiceRequest />} />
           <Route path="/request-status" element={<RequestStatus />} />
           
-          {/* Receptionist Routes */}
+          {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register-receptionist" element={<RegisterReceptionist />} />
+          
+          {/* Receptionist Routes (also accessible by Admin) */}
           <Route
             path="/receptionist-dashboard"
             element={
-              <ProtectedRoute allowedRoles={["receptionist"]}>
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
                 <ReceptionistDashboard />
               </ProtectedRoute>
             }
@@ -53,8 +64,44 @@ const App = () => {
           <Route
             path="/visitors-list"
             element={
-              <ProtectedRoute allowedRoles={["receptionist"]}>
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
                 <VisitorsList />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Meeting Routes (accessible by both Receptionist and Admin) */}
+          <Route
+            path="/meetings"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <Meetings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meetings/create"
+            element={
+              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+                <CreateMeeting />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Admin Only Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <UsersList />
               </ProtectedRoute>
             }
           />

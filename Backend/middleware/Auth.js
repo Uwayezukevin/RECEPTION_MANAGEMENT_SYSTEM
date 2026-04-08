@@ -40,13 +40,31 @@ export const authenticate = async (req, res, next) => {
   }
 };
 
-// For receptionist-only routes
+// For receptionist-only routes (both receptionist AND admin can access)
 export const authorizeReceptionist = async (req, res, next) => {
-  if (req.user.role !== 'receptionist') {
+  if (req.user.role !== 'receptionist' && req.user.role !== 'admin') {
     return res.status(403).json({ 
       success: false,
-      msg: 'Access denied. Receptionist privileges required.' 
+      msg: 'Access denied. Receptionist or Admin privileges required.' 
     });
   }
+  next();
+};
+
+// For admin-only routes (only admin can access)
+export const authorizeAdmin = async (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ 
+      success: false,
+      msg: 'Access denied. Admin privileges required.' 
+    });
+  }
+  next();
+};
+
+// Optional: For both roles (any authenticated user)
+export const authorizeAny = async (req, res, next) => {
+  // This just requires authentication, which is already done
+  // So we just call next() directly
   next();
 };

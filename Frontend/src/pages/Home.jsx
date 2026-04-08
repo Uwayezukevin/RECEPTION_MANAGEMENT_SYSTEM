@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Responsive version with Login Link
+// src/pages/Home.jsx - Responsive version with Staff Dashboard link
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -16,6 +16,7 @@ import {
   FaShieldAlt,
   FaRocket,
   FaSignInAlt,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { MdLocationOn, MdEmail } from "react-icons/md";
 import logo from "../assets/image.png";
@@ -23,19 +24,42 @@ import QRCode from "../assets/frame (3).png";
 
 const Home = () => {
   const navigate = useNavigate();
+  
+  // Check if user is logged in (staff)
+  const user = localStorage.getItem("user");
+  const isAuthenticated = user ? JSON.parse(user)?.token : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
-      {/* Header with Login Link */}
+      {/* Header with Auth Links */}
       <div className="relative">
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
-          <Link
-            to="/login"
-            className="bg-white/10 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-white/20 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-white/20"
-          >
-            <FaSignInAlt className="text-sm" />
-            <span>Staff Login</span>
-          </Link>
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 flex gap-2 sm:gap-3">
+          {isAuthenticated ? (
+            <>
+              <Link
+                to="/receptionist-dashboard"
+                className="bg-green-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-green-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-green-500/30"
+              >
+                <FaCalendarAlt className="text-sm" />
+                <span>Dashboard</span>
+              </Link>
+              <Link
+                to="/meetings"
+                className="bg-purple-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-purple-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-purple-500/30"
+              >
+                <FaCalendarAlt className="text-sm" />
+                <span>Meetings</span>
+              </Link>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-white/10 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-white/20 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-white/20"
+            >
+              <FaSignInAlt className="text-sm" />
+              <span>Staff Login</span>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -67,20 +91,21 @@ const Home = () => {
                   className="w-20 h-20 sm:w-24 sm:h-24 object-contain mb-2"
                   alt="Scan QR code"
                 />
-
                 <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">
                   Scan to continue <br className="hidden sm:block" />
                   as a visitor
                 </span>
               </div>
-              <Link
-                to="/login"
-                className="bg-white/10 backdrop-blur-md text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-white/20 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base border border-white/20"
-              >
-                <FaSignInAlt />
-                <span>Staff Login</span>
-                <FaArrowRight />
-              </Link>
+            {!isAuthenticated && (
+                <Link
+                  to="/login"
+                  className="bg-white/10 backdrop-blur-md text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-white/20 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base border border-white/20"
+                >
+                  <FaSignInAlt />
+                  <span>Staff Login</span>
+                  <FaArrowRight />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -314,7 +339,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Footer - Responsive */}
+      {/* Footer */}
       <footer className="bg-black/20 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">

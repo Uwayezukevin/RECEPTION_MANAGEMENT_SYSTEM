@@ -1,4 +1,4 @@
-// models/User.js - COMPLETELY FIXED VERSION
+// models/User.js - WITH ADMIN ROLE
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['receptionist'],
+    enum: ['receptionist', 'admin'],
     default: 'receptionist'
   },
   isActive: {
@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// THIS IS THE FIX - NO next PARAMETER
+// Hash password before saving
 userSchema.pre('save', async function() {
   // Only hash the password if it has been modified (or is new)
   if (this.isModified('password')) {
@@ -53,6 +53,16 @@ userSchema.pre('save', async function() {
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Check if user is admin
+userSchema.methods.isAdmin = function() {
+  return this.role === 'admin';
+};
+
+// Check if user is receptionist
+userSchema.methods.isReceptionist = function() {
+  return this.role === 'receptionist';
 };
 
 // Remove password when sending JSON response

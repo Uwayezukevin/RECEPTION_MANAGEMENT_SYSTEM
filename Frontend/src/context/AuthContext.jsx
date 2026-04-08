@@ -66,6 +66,11 @@ export const AuthProvider = ({ children }) => {
         try {
           const response = await API.getCurrentUser();
           setUser(response.data.user);
+          // Update stored user with fresh data
+          localStorage.setItem("user", JSON.stringify({
+            user: response.data.user,
+            token: userData.token
+          }));
         } catch (err) {
           console.log("Token verification failed, logging out");
           localStorage.removeItem("user");
@@ -81,8 +86,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const setupSocket = () => {
-    // Only setup socket if user exists and is receptionist
-    if (user && user.role === 'receptionist') {
+    // Setup socket for both receptionist and admin
+    if (user && (user.role === 'receptionist' || user.role === 'admin')) {
       API.initSocket();
     }
   };
@@ -98,19 +103,31 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const response = await API.login({ email, password });
-    console.log("Login response:", response.data);
-    
-    // Store both user and token
-    const userData = {
-      user: response.data.user,
-      token: response.data.token
-    };
-    
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(response.data.user);
-    toast.success("Login successful! Welcome back.");
-    return response.data;
+    try {
+      const response = await API.login({ email, password });
+      console.log("Login response:", response.data);
+      
+      // Store both user and token
+      const userData = {
+        user: response.data.user,
+        token: response.data.token
+      };
+      
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(response.data.user);
+      
+      // Show role-specific welcome message
+      const roleMessage = response.data.user.role === 'admin' 
+        ? 'Welcome Admin!' 
+        : 'Welcome back, Receptionist!';
+      
+      toast.success(`${roleMessage} Login successful.`);
+      return response.data;
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.msg || "Login failed");
+      throw error;
+    }
   };
 
   const logout = () => {
@@ -141,6 +158,14 @@ export const AuthProvider = ({ children }) => {
     toast.success("All notifications marked as read");
   };
 
+  // Helper methods for role checking
+  const isAdmin = () => user?.role === 'admin';
+  const isReceptionist = () => user?.role === 'receptionist';
+  const hasRole = (roles) => {
+    if (!user) return false;
+    return roles.includes(user.role);
+  };
+
   const value = {
     user,
     loading,
@@ -151,6 +176,10 @@ export const AuthProvider = ({ children }) => {
     markNotificationRead,
     markAllRead,
     fetchNotifications,
+    // Role helpers
+    isAdmin,
+    isReceptionist,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
