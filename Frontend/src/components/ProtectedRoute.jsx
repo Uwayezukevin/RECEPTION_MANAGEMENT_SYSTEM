@@ -24,6 +24,13 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   // Check role if specified
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    // Redirect to appropriate dashboard based on role
+    if (user.role === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    if (user.role === 'receptionist') {
+      return <Navigate to="/receptionist-dashboard" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 

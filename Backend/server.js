@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import router from "./routes/routes.js";
+import meetingRoutes from "./routes/meetingRoutes.js";
 import Notification from "./models/Notification.js";
 import conn from "./config/db.js";
 
@@ -41,6 +42,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// IMPORTANT: Increase payload limit for signature images (Base64 can be large)
+app.use(express.json({ limit: '10mb' }));  // Increased for signatures
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // Socket.io CORS configuration
 const io = new Server(server, {
   cors: {
@@ -48,6 +53,9 @@ const io = new Server(server, {
     credentials: true,
     methods: ["GET", "POST"]
   },
+  // Increase max payload for socket emissions (for signatures)
+  maxHttpBufferSize: 1e8, // 100 MB
+  pingTimeout: 60000,
 });
 
 // Socket.io middleware for authentication (for staff)
@@ -96,6 +104,23 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Handle joining meeting room for real-time participant updates
+  socket.on("join-meeting-room", (meetingId) => {
+    if (meetingId) {
+      socket.join(`meeting_${meetingId}`);
+      console.log(`Socket joined meeting room: meeting_${meetingId}`);
+      socket.emit("joined-meeting-room", { meetingId, success: true });
+    }
+  });
+
+  // Handle leaving meeting room
+  socket.on("leave-meeting-room", (meetingId) => {
+    if (meetingId) {
+      socket.leave(`meeting_${meetingId}`);
+      console.log(`Socket left meeting room: meeting_${meetingId}`);
+    }
+  });
+
   // Handle leaving request room
   socket.on("leave-request-room", (requestId) => {
     if (requestId) {
@@ -115,28 +140,56 @@ app.use((req, res, next) => {
   next();
 });
 
-// Parse JSON bodies
-app.use(express.json());
-
 // Routes
 app.use("/api", router);
+app.use("/api/meetings", meetingRoutes);
+
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "OK", 
+    timestamp: new Date(),
+    uptime: process.uptime()
+  });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  
+  // Handle specific error types
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      msg: "Request entity too large. Signature image may be too big. Please try a smaller signature."
+    });
+  }
+  
   res.status(err.status || 500).json({
     success: false,
     msg: err.message || 'Internal server error'
   });
 });
 
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
 const PORT = process.env.PORT || 3400;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API URL: http://localhost:${PORT}/api`);
-  console.log(`WebSocket URL: ws://localhost:${PORT}`);
-  console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
-  console.log(`✅ Real-time updates enabled for requests`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 API URL: http://localhost:${PORT}/api`);
+  console.log(`🔌 WebSocket URL: ws://localhost:${PORT}`);
+  console.log(`📅 Meeting API URL: http://localhost:${PORT}/api/meetings`);
+  console.log(`✅ CORS enabled for origins:`);
+  allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
+  console.log(`✅ Real-time updates enabled for requests and meetings`);
+  console.log(`✅ Signature support enabled (10MB limit)`);
 });
 
 export default app;
