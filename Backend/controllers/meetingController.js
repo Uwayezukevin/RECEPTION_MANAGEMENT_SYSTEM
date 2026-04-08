@@ -1134,3 +1134,19 @@ export const ExportMeetingToAllFormats = async (req, res) => {
     });
   }
 };
+// Add this at the VERY END of meetingController.js
+export {
+  CreateMeeting,
+  AddParticipant,
+  GetAllMeetings,
+  GetMeetingById,
+  UpdateMeetingStatus,
+  GetMeetingParticipants,
+  ExportMeetingToCSV,
+  GetUpcomingMeetings,
+  GetMeetingStats,
+  ExportMeetingToPDF,
+  ExportMeetingToExcel,
+  ExportMeetingToHTML,
+  ExportMeetingToAllFormats
+};
