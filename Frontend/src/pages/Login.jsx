@@ -1,13 +1,22 @@
-// src/pages/Login.jsx - Updated with role-based redirects
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FaEnvelope, FaLock, FaSignInAlt, FaSpinner } from "react-icons/fa";
+import { 
+  FaEnvelope, 
+  FaLock, 
+  FaSignInAlt, 
+  FaSpinner,
+  FaUserShield,
+  FaUserTie
+} from "react-icons/fa";
+import { MdAdminPanelSettings } from "react-icons/md";
 import logo from "../assets/image.png";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState("receptionist");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -18,6 +27,13 @@ const Login = () => {
     
     try {
       const response = await login(email, password);
+      
+      // Check if the logged-in user's role matches the selected role
+      if (response.user.role !== selectedRole) {
+        toast.error(`This account is registered as ${response.user.role}. Please select the correct role.`);
+        setLoading(false);
+        return;
+      }
       
       // Role-based redirect
       if (response.user.role === "admin") {
@@ -44,6 +60,39 @@ const Login = () => {
             <p className="text-gray-500 mt-1">Sign in to your account</p>
           </div>
 
+          {/* Role Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Login as
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedRole("receptionist")}
+                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  selectedRole === "receptionist"
+                    ? "border-primary-500 bg-primary-50 text-primary-700"
+                    : "border-gray-200 hover:border-gray-300 text-gray-600"
+                }`}
+              >
+                <FaUserTie className="text-lg" />
+                <span className="font-medium">Receptionist</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRole("admin")}
+                className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                  selectedRole === "admin"
+                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    : "border-gray-200 hover:border-gray-300 text-gray-600"
+                }`}
+              >
+                <MdAdminPanelSettings className="text-lg" />
+                <span className="font-medium">Admin</span>
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -56,7 +105,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  placeholder="admin@mininfra.gov.rw"
+                  placeholder="user@example.com"
                   required
                 />
               </div>
@@ -92,7 +141,7 @@ const Login = () => {
               ) : (
                 <>
                   <FaSignInAlt />
-                  Sign In
+                  Sign In as {selectedRole === "admin" ? "Admin" : "Receptionist"}
                 </>
               )}
             </button>
@@ -101,12 +150,9 @@ const Login = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link to="/register-receptionist" className="text-primary-600 hover:text-primary-700 font-medium">
-                Register as Receptionist
+              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+                Register here
               </Link>
-            </p>
-            <p className="text-xs text-gray-400 mt-4">
-              Admin accounts can only be created by system administrators
             </p>
           </div>
         </div>

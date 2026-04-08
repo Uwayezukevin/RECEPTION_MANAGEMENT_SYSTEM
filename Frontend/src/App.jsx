@@ -5,7 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./pages/Login";
-import RegisterReceptionist from "./pages/RegisterReceptionist";
+import Register from "./pages/Register";
 import ReceptionistDashboard from "./pages/ReceptionistDashboard";
 import VisitorServiceRequest from "./pages/VisitorServiceRequest";
 import VisitorsList from "./pages/VisitorsList";
@@ -50,7 +50,7 @@ const App = () => {
           
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register-receptionist" element={<RegisterReceptionist />} />
+          <Route path="/register" element={<Register />} />
           
           {/* Receptionist Routes (also accessible by Admin) */}
           <Route
