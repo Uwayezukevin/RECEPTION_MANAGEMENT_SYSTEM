@@ -5,27 +5,20 @@ import * as meetingController from '../controllers/meetingController.js';
 
 const meetingRouter = express.Router();
 
-// ==================== PUBLIC ROUTES (No authentication required) ====================
-// These are for participants to sign in and view meeting info
+// ==================== PUBLIC ROUTES (No authentication) ====================
 meetingRouter.post('/:meetingId/participants', meetingController.AddParticipant);
-meetingRouter.get('/:id', meetingController.GetMeetingById);  // ✅ MOVED TO PUBLIC - NO AUTH NEEDED
+meetingRouter.get('/:id', meetingController.GetMeetingById);  // ✅ PUBLIC - no auth
 
-// ==================== PROTECTED ROUTES (Authentication required) ====================
-// Meeting CRUD
-meetingRouter.post('/', authenticate, authorizeReceptionist, meetingController.CreateMeeting);
-meetingRouter.get('/', authenticate, authorizeReceptionist, meetingController.GetAllMeetings);
+// ==================== PROTECTED ROUTES ====================
+meetingRouter.get('/stats', authenticate, authorizeAdmin, meetingController.GetMeetingStats);
 meetingRouter.get('/upcoming', authenticate, authorizeReceptionist, meetingController.GetUpcomingMeetings);
+meetingRouter.get('/', authenticate, authorizeReceptionist, meetingController.GetAllMeetings);
+meetingRouter.post('/', authenticate, authorizeReceptionist, meetingController.CreateMeeting);
 meetingRouter.put('/:id/status', authenticate, authorizeReceptionist, meetingController.UpdateMeetingStatus);
-
-// Participants (protected view)
 meetingRouter.get('/:id/participants', authenticate, authorizeReceptionist, meetingController.GetMeetingParticipants);
-
-// Export routes
+meetingRouter.get('/:id/export/csv', authenticate, authorizeReceptionist, meetingController.ExportMeetingToCSV);
 meetingRouter.get('/:id/export/pdf', authenticate, authorizeReceptionist, meetingController.ExportMeetingToPDF);
 meetingRouter.get('/:id/export/excel', authenticate, authorizeReceptionist, meetingController.ExportMeetingToExcel);
 meetingRouter.get('/:id/export/html', authenticate, authorizeReceptionist, meetingController.ExportMeetingToHTML);
-
-// Admin-only meeting stats
-meetingRouter.get('/stats', authenticate, authorizeAdmin, meetingController.GetMeetingStats);
 
 export default meetingRouter;
