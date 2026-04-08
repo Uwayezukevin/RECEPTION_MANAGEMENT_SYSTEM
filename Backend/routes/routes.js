@@ -13,6 +13,9 @@ const router = express.Router();
 // Visitor registration - PUBLIC
 router.post('/visitors', visitorController.CreateVisitor);
 
+// COMBINED: Create visitor with service request - PUBLIC (NEW)
+router.post('/visitors-with-request', visitorController.CreateVisitorWithRequest);
+
 // Service list - PUBLIC (so visitors can see services before registering)
 router.get('/services', serviceController.GetAllServices);
 

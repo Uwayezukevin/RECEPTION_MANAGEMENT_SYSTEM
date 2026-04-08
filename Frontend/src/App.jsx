@@ -7,8 +7,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import RegisterReceptionist from "./pages/RegisterReceptionist";
 import ReceptionistDashboard from "./pages/ReceptionistDashboard";
-import VisitorRegistration from "./pages/VisitorRegistration";
-import ServiceRequestForm from "./pages/ServiceRequestForm";
+import VisitorServiceRequest from "./pages/VisitorServiceRequest";
 import VisitorsList from "./pages/VisitorsList";
 import Home from "./pages/Home";
 import RequestStatus from "./pages/RequestStatus";
@@ -37,8 +36,7 @@ const App = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/visitor-registration" element={<VisitorRegistration />} />
-          <Route path="/service-request" element={<ServiceRequestForm />} />
+          <Route path="/visitor-service" element = {<VisitorServiceRequest />} />
           <Route path="/request-status" element={<RequestStatus />} />
           
           {/* Receptionist Routes */}
