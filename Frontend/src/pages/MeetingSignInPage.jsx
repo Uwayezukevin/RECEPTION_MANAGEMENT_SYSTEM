@@ -1,7 +1,7 @@
 // src/pages/MeetingSignInPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope } from 'react-icons/fa';
+import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle } from 'react-icons/fa';
 import SignaturePad from '../components/meeting/SignaturePad';
 import API from '../service/api';
 import toast from 'react-hot-toast';
@@ -22,17 +22,21 @@ const MeetingSignInPage = () => {
   const [signature, setSignature] = useState(null);
 
   useEffect(() => {
-    fetchMeetingDetails();
+    if (meetingId) {
+      fetchMeetingDetails();
+    }
   }, [meetingId]);
 
   const fetchMeetingDetails = async () => {
     try {
+      setLoading(true);
+      console.log('Fetching meeting:', meetingId);
       const response = await API.get(`/meetings/${meetingId}`);
+      console.log('Meeting response:', response.data);
       setMeeting(response.data.meeting);
     } catch (error) {
       console.error('Error fetching meeting:', error);
-      toast.error('Meeting not found');
-      setTimeout(() => navigate('/'), 2000);
+      toast.error('Meeting not found or invalid link');
     } finally {
       setLoading(false);
     }
@@ -62,7 +66,10 @@ const MeetingSignInPage = () => {
     
     try {
       const response = await API.addMeetingParticipant(meetingId, {
-        ...formData,
+        fullName: formData.fullName,
+        institution: formData.institution,
+        position: formData.position,
+        email: formData.email,
         signature: signature
       });
       
@@ -100,8 +107,15 @@ const MeetingSignInPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center">
         <div className="text-center text-white">
+          <FaUserCircle className="text-6xl mx-auto mb-4 text-white/50" />
           <h2 className="text-2xl font-bold mb-2">Meeting Not Found</h2>
-          <p>The meeting you're looking for doesn't exist or has been removed.</p>
+          <p className="text-white/70 mb-6">The meeting you're looking for doesn't exist or has been removed.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition"
+          >
+            Go Home
+          </button>
         </div>
       </div>
     );
@@ -115,25 +129,37 @@ const MeetingSignInPage = () => {
           <div className="text-center mb-4">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-3" />
             <h1 className="text-2xl font-bold text-white">{meeting.title}</h1>
-            <p className="text-white/80 mt-2">{meeting.description}</p>
+            <p className="text-white/80 mt-2 text-sm">{meeting.description}</p>
           </div>
           
           <div className="grid grid-cols-2 gap-4 text-white/90 text-sm">
             <div>
-              <p className="font-semibold">📅 Date</p>
-              <p>{new Date(meeting.meetingDate).toLocaleDateString()}</p>
+              <p className="font-semibold flex items-center gap-2">
+                <FaCalendarAlt className="text-primary-400" />
+                Date
+              </p>
+              <p className="mt-1">{new Date(meeting.meetingDate).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="font-semibold">⏰ Time</p>
-              <p>{meeting.startTime} - {meeting.endTime}</p>
+              <p className="font-semibold flex items-center gap-2">
+                <FaClock className="text-primary-400" />
+                Time
+              </p>
+              <p className="mt-1">{meeting.startTime} - {meeting.endTime}</p>
             </div>
             <div>
-              <p className="font-semibold">📍 Location</p>
-              <p>{meeting.location}</p>
+              <p className="font-semibold flex items-center gap-2">
+                <FaMapMarkerAlt className="text-primary-400" />
+                Location
+              </p>
+              <p className="mt-1">{meeting.location}</p>
             </div>
             <div>
-              <p className="font-semibold">👨‍💼 Meeting Leader</p>
-              <p>{meeting.meetingLeader?.name}</p>
+              <p className="font-semibold flex items-center gap-2">
+                <FaUserTie className="text-primary-400" />
+                Meeting Leader
+              </p>
+              <p className="mt-1">{meeting.meetingLeader?.name}</p>
             </div>
           </div>
         </div>
