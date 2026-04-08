@@ -15,13 +15,12 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaPlayCircle,
-  FaBell,
-  FaSignature,
-  FaFilePdf,
-  FaFileExcel,
-  FaFileCode
+  FaLink,
+  FaQrcode,
+  FaCopy,
+  FaPrint
 } from 'react-icons/fa';
-import { MdAdminPanelSettings } from 'react-icons/md';
+import { QRCodeSVG } from 'qrcode.react';
 import API from '../../service/api';
 import toast from 'react-hot-toast';
 
@@ -32,6 +31,7 @@ const Meetings = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(null);
   const [filter, setFilter] = useState('all');
   const [exporting, setExporting] = useState(false);
 
@@ -120,7 +120,6 @@ const Meetings = () => {
           return;
       }
       
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -137,6 +136,71 @@ const Meetings = () => {
     } finally {
       setExporting(false);
     }
+  };
+
+  const getSignInLink = (meetingId) => {
+    return `${window.location.origin}/meeting/signin/${meetingId}`;
+  };
+
+  const copySignInLink = (meetingId, meetingTitle) => {
+    const link = getSignInLink(meetingId);
+    navigator.clipboard.writeText(link);
+    toast.success(`Sign-in link for "${meetingTitle}" copied to clipboard!`);
+  };
+
+  const printQRCode = (meeting) => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>QR Code - ${meeting.title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              margin: 0;
+              padding: 20px;
+            }
+            .container {
+              text-align: center;
+            }
+            h2 {
+              margin-bottom: 10px;
+            }
+            p {
+              color: #666;
+              margin-bottom: 20px;
+            }
+            .qr-code {
+              margin: 20px 0;
+            }
+            .link {
+              font-size: 12px;
+              color: #999;
+              word-break: break-all;
+              margin-top: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h2>${meeting.title}</h2>
+            <p>Scan QR code to sign in to this meeting</p>
+            <div class="qr-code">
+              <img src="${QRCodeSVG.toDataURL(getSignInLink(meeting._id))}" />
+            </div>
+            <div class="link">
+              ${getSignInLink(meeting._id)}
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.print();
+    printWindow.close();
   };
 
   const getStatusBadge = (status) => {
@@ -272,6 +336,26 @@ const Meetings = () => {
                     <span>View</span>
                   </button>
                   
+                  {/* QR Code Button */}
+                  <button
+                    onClick={() => setShowQRCode(meeting)}
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-indigo-500/20 text-indigo-200 rounded-lg hover:bg-indigo-500/30 transition-all text-sm"
+                    title="Show QR Code for sign-in"
+                  >
+                    <FaQrcode />
+                    <span>QR</span>
+                  </button>
+                  
+                  {/* Copy Link Button */}
+                  <button
+                    onClick={() => copySignInLink(meeting._id, meeting.title)}
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-purple-500/20 text-purple-200 rounded-lg hover:bg-purple-500/30 transition-all text-sm"
+                    title="Copy sign-in link"
+                  >
+                    <FaLink />
+                    <span>Link</span>
+                  </button>
+                  
                   <div className="relative group">
                     <button
                       className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-500/20 text-green-200 rounded-lg hover:bg-green-500/30 transition-all text-sm"
@@ -285,22 +369,19 @@ const Meetings = () => {
                         onClick={() => exportMeeting(meeting._id, 'pdf')}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
                       >
-                        <FaFilePdf className="text-red-400" />
-                        PDF
+                        📄 PDF
                       </button>
                       <button
                         onClick={() => exportMeeting(meeting._id, 'excel')}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
                       >
-                        <FaFileExcel className="text-green-400" />
-                        Excel
+                        📊 Excel
                       </button>
                       <button
                         onClick={() => exportMeeting(meeting._id, 'html')}
                         className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
                       >
-                        <FaFileCode className="text-blue-400" />
-                        HTML
+                        🌐 HTML
                       </button>
                     </div>
                   </div>
@@ -323,6 +404,59 @@ const Meetings = () => {
           </div>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowQRCode(null)}>
+          <div className="bg-white rounded-2xl p-6 text-center max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-gray-900">{showQRCode.title}</h3>
+              <p className="text-gray-500 text-sm mt-1">Scan to sign in to this meeting</p>
+            </div>
+            
+            <div className="bg-white p-4 rounded-xl inline-block mx-auto">
+              <QRCodeSVG 
+                value={`${window.location.origin}/meeting/signin/${showQRCode._id}`} 
+                size={200}
+                className="mx-auto"
+              />
+            </div>
+            
+            <div className="mt-4">
+              <p className="text-xs text-gray-400 break-all bg-gray-50 p-2 rounded-lg">
+                {`${window.location.origin}/meeting/signin/${showQRCode._id}`}
+              </p>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => copySignInLink(showQRCode._id, showQRCode.title)}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
+              >
+                <FaCopy />
+                Copy Link
+              </button>
+              <button
+                onClick={() => {
+                  const link = `${window.location.origin}/meeting/signin/${showQRCode._id}`;
+                  window.open(link, '_blank');
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+              >
+                <FaLink />
+                Open Link
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setShowQRCode(null)}
+              className="mt-4 w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Participants Modal */}
       {showParticipants && selectedMeeting && (
@@ -362,12 +496,21 @@ const Meetings = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <FaSignature className="text-5xl text-gray-300 mx-auto mb-3" />
+                  <FaUsers className="text-5xl text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500">No participants have signed in yet</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Share the QR code or sign-in link with participants
+                  </p>
                 </div>
               )}
             </div>
-            <div className="border-t border-gray-200 px-6 py-4 flex justify-end">
+            <div className="border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => copySignInLink(selectedMeeting._id, selectedMeeting.title)}
+                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition"
+              >
+                Copy Sign-in Link
+              </button>
               <button
                 onClick={() => setShowParticipants(false)}
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"

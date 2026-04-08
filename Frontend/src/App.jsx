@@ -15,6 +15,7 @@ import RequestStatus from "./pages/RequestStatus";
 // Meeting Module Imports
 import Meetings from "./pages/admin/Meetings";
 import CreateMeeting from "./pages/admin/CreateMeeting";
+import MeetingSignInPage from "./pages/MeetingSignInPage";
 
 // Admin Module Imports
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -47,7 +48,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/visitor-service" element={<VisitorServiceRequest />} />
           <Route path="/request-status" element={<RequestStatus />} />
-          
+          <Route path= "/meeting/signin/:meetingId" element = {<MeetingSignInPage />}/>
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
