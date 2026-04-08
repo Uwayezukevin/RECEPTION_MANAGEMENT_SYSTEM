@@ -36,12 +36,7 @@ const MeetingSignInPage = () => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching meeting with ID:', meetingId);
-      
-      // ✅ Use the specific API method
       const response = await API.getMeetingById(meetingId);
-      
-      console.log('Response:', response.data);
       
       if (response.data.success && response.data.meeting) {
         setMeeting(response.data.meeting);
@@ -54,10 +49,6 @@ const MeetingSignInPage = () => {
       let errorMsg = 'Meeting not found or invalid link';
       if (error.response?.data?.msg) {
         errorMsg = error.response.data.msg;
-      } else if (error.response?.status === 404) {
-        errorMsg = 'Meeting not found';
-      } else if (error.response?.status === 500) {
-        errorMsg = 'Server error. Please try again later.';
       }
       setError(errorMsg);
       toast.error(errorMsg);
@@ -89,7 +80,6 @@ const MeetingSignInPage = () => {
     setSubmitting(true);
     
     try {
-      // ✅ Use the specific API method
       const response = await API.addMeetingParticipant(meetingId, {
         fullName: formData.fullName,
         institution: formData.institution,
@@ -121,7 +111,6 @@ const MeetingSignInPage = () => {
         <div className="text-center">
           <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
           <p className="text-white text-lg">Loading meeting details...</p>
-          <p className="text-white/60 text-sm mt-2">Meeting ID: {meetingId}</p>
         </div>
       </div>
     );
@@ -148,7 +137,6 @@ const MeetingSignInPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 py-8">
       <div className="max-w-2xl mx-auto px-4">
-        {/* Meeting Info Card */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
           <div className="text-center mb-4">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-3" />
@@ -188,7 +176,6 @@ const MeetingSignInPage = () => {
           </div>
         </div>
 
-        {/* Sign-in Form */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">

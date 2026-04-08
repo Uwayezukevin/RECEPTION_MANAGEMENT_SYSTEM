@@ -2,12 +2,12 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";  // ✅ Added missing import
 import { 
   FaEnvelope, 
   FaLock, 
   FaSignInAlt, 
   FaSpinner,
-  FaUserShield,
   FaUserTie
 } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
@@ -45,6 +45,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Login failed:", error);
+      toast.error(error.response?.data?.msg || "Login failed");
     } finally {
       setLoading(false);
     }
