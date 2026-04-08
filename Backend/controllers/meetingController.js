@@ -529,17 +529,3 @@ export const ExportMeetingToHTML = async (req, res) => {
 };
 
 // ==================== SINGLE EXPORT AT THE END ====================
-export {
-  CreateMeeting,
-  AddParticipant,
-  GetAllMeetings,
-  GetMeetingById,
-  UpdateMeetingStatus,
-  GetMeetingParticipants,
-  ExportMeetingToCSV,
-  GetUpcomingMeetings,
-  GetMeetingStats,
-  ExportMeetingToPDF,
-  ExportMeetingToExcel,
-  ExportMeetingToHTML
-};
