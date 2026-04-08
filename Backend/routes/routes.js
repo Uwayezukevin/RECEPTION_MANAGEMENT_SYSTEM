@@ -6,6 +6,7 @@ import * as visitorController from '../controllers/visitorController.js';
 import * as requestController from '../controllers/requestController.js';
 import * as serviceController from '../controllers/serviceController.js';
 import * as notificationController from '../controllers/notificationController.js';
+import meetingRouter from './meetingRoutes.js';
 
 const router = express.Router();
 
@@ -48,4 +49,5 @@ router.put('/notifications/:id/read', authenticate, authorizeReceptionist, notif
 router.put('/notifications/read-all', authenticate, authorizeReceptionist, notificationController.MarkAllAsRead);
 router.delete('/notifications/:id', authenticate, authorizeReceptionist, notificationController.DeleteNotification);
 
+router.use('/meeting' , meetingRouter)
 export default router;
