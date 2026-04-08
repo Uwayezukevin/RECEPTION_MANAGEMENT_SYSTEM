@@ -37,9 +37,21 @@ const Meetings = () => {
   const [showQRCode, setShowQRCode] = useState(null);
   const [filter, setFilter] = useState('all');
   const [exporting, setExporting] = useState(false);
+  const [openExportMenu, setOpenExportMenu] = useState(null);
 
   useEffect(() => {
     fetchMeetings();
+  }, []);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenExportMenu(null);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
   }, []);
 
   const fetchMeetings = async () => {
@@ -105,7 +117,6 @@ const Meetings = () => {
           return;
       }
       
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -121,7 +132,13 @@ const Meetings = () => {
       toast.error('Failed to export meeting');
     } finally {
       setExporting(false);
+      setOpenExportMenu(null);
     }
+  };
+
+  const toggleExportMenu = (meetingId, e) => {
+    e.stopPropagation();
+    setOpenExportMenu(openExportMenu === meetingId ? null : meetingId);
   };
 
   const getSignInLink = (meetingId) => {
@@ -278,37 +295,42 @@ const Meetings = () => {
                     <FaLink />
                   </button>
                   
-                  <div className="relative group">
+                  {/* Export Dropdown - Fixed Version */}
+                  <div className="relative">
                     <button
+                      onClick={(e) => toggleExportMenu(meeting._id, e)}
                       className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-500/20 text-green-200 rounded-lg hover:bg-green-500/30 transition-all text-sm"
                       disabled={exporting}
                     >
                       <FaFileDownload />
                       <span>Export</span>
                     </button>
-                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex flex-col gap-1 bg-gray-800 rounded-lg p-2 min-w-[120px] z-10">
-                      <button
-                        onClick={() => exportMeeting(meeting._id, 'pdf')}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
-                      >
-                        <FaFilePdf className="text-red-400" />
-                        PDF
-                      </button>
-                      <button
-                        onClick={() => exportMeeting(meeting._id, 'excel')}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
-                      >
-                        <FaFileExcel className="text-green-400" />
-                        Excel
-                      </button>
-                      <button
-                        onClick={() => exportMeeting(meeting._id, 'html')}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
-                      >
-                        <FaFileCode className="text-blue-400" />
-                        HTML
-                      </button>
-                    </div>
+                    
+                    {openExportMenu === meeting._id && (
+                      <div className="absolute bottom-full left-0 mb-2 bg-gray-800 rounded-lg p-2 min-w-[140px] z-50 shadow-xl border border-gray-700">
+                        <button
+                          onClick={() => exportMeeting(meeting._id, 'pdf')}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition"
+                        >
+                          <FaFilePdf className="text-red-400" />
+                          Export as PDF
+                        </button>
+                        <button
+                          onClick={() => exportMeeting(meeting._id, 'excel')}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition"
+                        >
+                          <FaFileExcel className="text-green-400" />
+                          Export as Excel
+                        </button>
+                        <button
+                          onClick={() => exportMeeting(meeting._id, 'html')}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition"
+                        >
+                          <FaFileCode className="text-blue-400" />
+                          Export as HTML
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
                   {meeting.status !== 'completed' && meeting.status !== 'cancelled' && (
