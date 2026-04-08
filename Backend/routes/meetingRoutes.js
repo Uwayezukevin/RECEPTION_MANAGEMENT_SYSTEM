@@ -3,7 +3,7 @@ import express from 'express';
 import { authenticate, authorizeReceptionist, authorizeAdmin } from '../middleware/Auth.js';
 import * as meetingController from '../controllers/meetingController.js';
 
-const router = express.Router();
+const meetingRouter = express.Router();
 
 // Public routes (for signing in to meetings - no auth needed)
 router.post('/:meetingId/participants', meetingController.AddParticipant);
@@ -24,4 +24,4 @@ router.get('/:id/export/html', authenticate, authorizeReceptionist, meetingContr
 // Admin-only meeting stats
 router.get('/stats', authenticate, authorizeAdmin, meetingController.GetMeetingStats);
 
-export default router;
+export default meetingRouter;
