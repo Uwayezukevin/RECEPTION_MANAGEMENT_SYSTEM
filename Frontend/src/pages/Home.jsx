@@ -1,6 +1,7 @@
-// src/pages/Home.jsx - Responsive version with Staff Dashboard link
+// src/pages/Home.jsx - Fixed with proper authentication
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   FaClipboardList,
   FaClock,
@@ -17,39 +18,81 @@ import {
   FaRocket,
   FaSignInAlt,
   FaCalendarAlt,
+  FaSpinner,
 } from "react-icons/fa";
-import { MdLocationOn, MdEmail } from "react-icons/md";
+import { MdLocationOn, MdEmail,MdAdminPanelSettings } from "react-icons/md";
 import logo from "../assets/image.png";
 import QRCode from "../assets/frame (3).png";
 
 const Home = () => {
   const navigate = useNavigate();
-  
-  // Check if user is logged in (staff)
-  const user = localStorage.getItem("user");
-  const isAuthenticated = user ? JSON.parse(user)?.token : null;
+  const { user, loading, isAdmin, isReceptionist } = useAuth();
+
+  // Handle navigation with authentication check
+  const handleProtectedNavigation = (path, requiredRole = null) => {
+    if (!user) {
+      // Redirect to login if not authenticated
+      navigate("/login");
+      return;
+    }
+
+    // Check role requirements
+    if (requiredRole === "admin" && !isAdmin()) {
+      navigate("/receptionist-dashboard");
+      return;
+    }
+
+    if (requiredRole === "receptionist" && !isReceptionist() && !isAdmin()) {
+      navigate("/admin/dashboard");
+      return;
+    }
+
+    navigate(path);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
+          <p className="text-white text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
       {/* Header with Auth Links */}
       <div className="relative">
         <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 flex gap-2 sm:gap-3">
-          {isAuthenticated ? (
+          {user ? (
             <>
-              <Link
-                to="/receptionist-dashboard"
-                className="bg-green-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-green-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-green-500/30"
-              >
-                <FaCalendarAlt className="text-sm" />
-                <span>Dashboard</span>
-              </Link>
-              <Link
-                to="/meetings"
-                className="bg-purple-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-purple-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-purple-500/30"
+              {isReceptionist() && (
+                <button
+                  onClick={() => handleProtectedNavigation("/receptionist-dashboard")}
+                  className="bg-green-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-green-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-green-500/30"
+                >
+                  <FaCalendarAlt className="text-sm" />
+                  <span>Dashboard</span>
+                </button>
+              )}
+              {isAdmin() && (
+                <button
+                  onClick={() => handleProtectedNavigation("/admin/dashboard")}
+                  className="bg-purple-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-purple-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-purple-500/30"
+                >
+                  <MdAdminPanelSettings className="text-sm" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
+              <button
+                onClick={() => handleProtectedNavigation("/meetings")}
+                className="bg-blue-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-blue-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-blue-500/30"
               >
                 <FaCalendarAlt className="text-sm" />
                 <span>Meetings</span>
-              </Link>
+              </button>
             </>
           ) : (
             <Link
@@ -85,18 +128,16 @@ const Home = () => {
               efficient, and completely digital.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg hover:scale-105 transition-all duration-300">
-                <img
-                  src={QRCode}
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain mb-2"
-                  alt="Scan QR code"
-                />
-                <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">
-                  Scan to continue <br className="hidden sm:block" />
-                  as a visitor
-                </span>
-              </div>
-            {!isAuthenticated && (
+              <Link
+                to="/visitor-service"
+                className="bg-gradient-to-r from-yellow-500 to-pink-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:from-yellow-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base"
+              >
+                <FaUserCheck />
+                <span>Register as Visitor</span>
+                <FaArrowRight />
+              </Link>
+              
+              {!user && (
                 <Link
                   to="/login"
                   className="bg-white/10 backdrop-blur-md text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:bg-white/20 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base border border-white/20"

@@ -1,427 +1,385 @@
+// src/pages/admin/Meetings.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  FaCalendarAlt, 
+  FaPlus, 
+  FaSpinner, 
+  FaUsers, 
+  FaClock, 
+  FaMapMarkerAlt,
+  FaUserTie,
+  FaEye,
+  FaFileDownload,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaPlayCircle,
+  FaBell,
+  FaSignature,
+  FaFilePdf,
+  FaFileExcel,
+  FaFileCode
+} from 'react-icons/fa';
+import { MdAdminPanelSettings } from 'react-icons/md';
 import API from '../../service/api';
-import MeetingSignIn from '../../components/meeting/MeetingSignIn';
-import MeetingExportButtons from '../../components/meeting/MeetingExportButtons';
+import toast from 'react-hot-toast';
 
 const Meetings = () => {
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [showSignIn, setShowSignIn] = useState(false);
-  const [showParticipants, setShowParticipants] = useState(null);
-  const [filter, setFilter] = useState({ status: 'all', type: 'all' });
+  const [showParticipants, setShowParticipants] = useState(false);
+  const [filter, setFilter] = useState('all');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetchMeetings();
-  }, [filter]);
+    
+    // Listen for new meeting notifications via WebSocket
+    const socket = API.getSocket();
+    if (socket) {
+      socket.on('meeting-created', (meeting) => {
+        toast.success(`New meeting scheduled: ${meeting.title}`, {
+          duration: 5000,
+          icon: '📅'
+        });
+        fetchMeetings();
+      });
+      
+      socket.on('meeting-updated', () => {
+        fetchMeetings();
+      });
+    }
+    
+    return () => {
+      const socket = API.getSocket();
+      if (socket) {
+        socket.off('meeting-created');
+        socket.off('meeting-updated');
+      }
+    };
+  }, []);
 
   const fetchMeetings = async () => {
     try {
       setLoading(true);
-      const response = await API.get('/meetings', {
-        params: { status: filter.status, meetingType: filter.type }
-      });
-      setMeetings(response.data.meetings);
+      const response = await API.getMeetings();
+      setMeetings(response.data.meetings || []);
     } catch (error) {
       console.error('Error fetching meetings:', error);
+      toast.error('Failed to load meetings');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchParticipants = async (meetingId) => {
-    try {
-      const response = await API.get(`/meetings/${meetingId}/participants`);
-      setShowParticipants(response.data);
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-    }
-  };
-
   const updateMeetingStatus = async (meetingId, status) => {
     try {
-      await API.put(`/meetings/${meetingId}/status`, { status });
+      await API.updateMeetingStatus(meetingId, { status });
+      toast.success(`Meeting marked as ${status}`);
       fetchMeetings();
     } catch (error) {
       console.error('Error updating status:', error);
+      toast.error('Failed to update meeting status');
+    }
+  };
+
+  const viewParticipants = async (meeting) => {
+    try {
+      const response = await API.getMeetingParticipants(meeting._id);
+      setSelectedMeeting({
+        ...meeting,
+        participants: response.data.participants || [],
+        totalParticipants: response.data.totalParticipants || 0
+      });
+      setShowParticipants(true);
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+      toast.error('Failed to load participants');
+    }
+  };
+
+  const exportMeeting = async (meetingId, format) => {
+    setExporting(true);
+    try {
+      let response;
+      switch (format) {
+        case 'pdf':
+          response = await API.exportMeetingToPDF(meetingId);
+          break;
+        case 'excel':
+          response = await API.exportMeetingToExcel(meetingId);
+          break;
+        case 'html':
+          response = await API.exportMeetingToHTML(meetingId);
+          break;
+        default:
+          return;
+      }
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `meeting_export.${format === 'excel' ? 'xlsx' : format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Meeting exported as ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export meeting');
+    } finally {
+      setExporting(false);
     }
   };
 
   const getStatusBadge = (status) => {
     const badges = {
-      scheduled: { color: '#3b82f6', text: 'Scheduled' },
-      ongoing: { color: '#eab308', text: 'Ongoing' },
-      completed: { color: '#22c55e', text: 'Completed' },
-      cancelled: { color: '#ef4444', text: 'Cancelled' }
+      scheduled: { bg: 'bg-blue-100', text: 'text-blue-700', icon: FaClock, label: 'Scheduled' },
+      ongoing: { bg: 'bg-green-100', text: 'text-green-700', icon: FaPlayCircle, label: 'Ongoing' },
+      completed: { bg: 'bg-gray-100', text: 'text-gray-700', icon: FaCheckCircle, label: 'Completed' },
+      cancelled: { bg: 'bg-red-100', text: 'text-red-700', icon: FaTimesCircle, label: 'Cancelled' }
     };
     const badge = badges[status] || badges.scheduled;
     return (
-      <span style={{
-        background: badge.color,
-        color: 'white',
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '12px',
-        fontWeight: '500'
-      }}>
-        {badge.text}
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
+        <badge.icon className="text-xs" />
+        {badge.label}
       </span>
     );
   };
 
+  const filteredMeetings = meetings.filter(meeting => {
+    if (filter === 'all') return true;
+    return meeting.status === filter;
+  });
+
   if (loading) {
-    return <div style={styles.loading}>Loading meetings...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
+          <p className="text-white text-lg">Loading meetings...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Meeting Management</h1>
-          <p style={styles.subtitle}>Manage weekly meetings and track attendance</p>
-        </div>
-        <button
-          onClick={() => window.location.href = '/admin/meetings/create'}
-          style={styles.createBtn}
-        >
-          + Create New Meeting
-        </button>
-      </div>
-
-      {/* Filters */}
-      <div style={styles.filters}>
-        <select
-          value={filter.status}
-          onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-          style={styles.filterSelect}
-        >
-          <option value="all">All Status</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        
-        <select
-          value={filter.type}
-          onChange={(e) => setFilter({ ...filter, type: e.target.value })}
-          style={styles.filterSelect}
-        >
-          <option value="all">All Types</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="special">Special</option>
-        </select>
-      </div>
-
-      {/* Meetings List */}
-      <div style={styles.meetingsGrid}>
-        {meetings.map((meeting) => (
-          <div key={meeting._id} style={styles.meetingCard}>
-            <div style={styles.cardHeader}>
-              <div>
-                <h3 style={styles.meetingTitle}>{meeting.title}</h3>
-                <p style={styles.meetingDate}>
-                  {new Date(meeting.meetingDate).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-              {getStatusBadge(meeting.status)}
-            </div>
-            
-            <div style={styles.meetingDetails}>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Time:</span>
-                <span>{meeting.startTime} - {meeting.endTime}</span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Location:</span>
-                <span>{meeting.location}</span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Leader:</span>
-                <span>{meeting.meetingLeader.name} ({meeting.meetingLeader.position})</span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>Participants:</span>
-                <span style={{ fontWeight: 'bold', color: '#3b82f6' }}>
-                  {meeting.participantCount || 0}
-                </span>
-              </div>
-            </div>
-            
-            <div style={styles.cardActions}>
-              <button
-                onClick={() => {
-                  setSelectedMeeting(meeting);
-                  setShowSignIn(true);
-                }}
-                style={styles.signInBtn}
-                disabled={meeting.status === 'completed' || meeting.status === 'cancelled'}
-              >
-                ✍️ Sign In
-              </button>
-              
-              <button
-                onClick={() => fetchParticipants(meeting._id)}
-                style={styles.viewBtn}
-              >
-                👥 View Participants
-              </button>
-              
-              <MeetingExportButtons meetingId={meeting._id} meetingTitle={meeting.title} />
-              
-              <select
-                onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)}
-                value={meeting.status}
-                style={styles.statusSelect}
-              >
-                <option value="scheduled">Set Scheduled</option>
-                <option value="ongoing">Set Ongoing</option>
-                <option value="completed">Set Completed</option>
-                <option value="cancelled">Set Cancelled</option>
-              </select>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Meeting Management</h1>
+            <p className="text-white/80 mt-1">Schedule and manage company meetings</p>
           </div>
-        ))}
-      </div>
+          <button
+            onClick={() => navigate('/meetings/create')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-white/20 transition-all border border-white/20"
+          >
+            <FaPlus />
+            <span>Schedule Meeting</span>
+          </button>
+        </div>
 
-      {/* Sign In Modal */}
-      {showSignIn && selectedMeeting && (
-        <MeetingSignIn
-          meetingId={selectedMeeting._id}
-          meetingTitle={selectedMeeting.title}
-          onSuccess={() => {
-            setShowSignIn(false);
-            fetchMeetings();
-            alert('Successfully signed in!');
-          }}
-          onClose={() => setShowSignIn(false)}
-        />
-      )}
+        {/* Filters */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          {['all', 'scheduled', 'ongoing', 'completed', 'cancelled'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-4 py-2 rounded-lg capitalize transition-all ${
+                filter === status
+                  ? 'bg-white text-primary-600 font-semibold shadow-lg'
+                  : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
 
-      {/* Participants Modal */}
-      {showParticipants && (
-        <div style={styles.overlay} onClick={() => setShowParticipants(null)}>
-          <div style={styles.participantsModal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHeader}>
-              <h2>{showParticipants.meeting?.title} - Participants</h2>
-              <button onClick={() => setShowParticipants(null)} style={styles.closeModalBtn}>×</button>
-            </div>
-            <div style={styles.participantsList}>
-              {showParticipants.participants?.map((p, idx) => (
-                <div key={idx} style={styles.participantItem}>
-                  <div style={styles.participantInfo}>
-                    <strong>{idx + 1}. {p.fullName}</strong>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {p.institution} - {p.position}
-                    </div>
-                    {p.email && <div style={{ fontSize: '11px', color: '#999' }}>{p.email}</div>}
-                    <div style={{ fontSize: '10px', color: '#999', marginTop: '4px' }}>
-                      Signed: {new Date(p.signedAt).toLocaleString()}
+        {/* Meetings Grid */}
+        {filteredMeetings.length === 0 ? (
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-12 text-center">
+            <FaCalendarAlt className="text-6xl text-white/40 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">No Meetings Found</h3>
+            <p className="text-white/60 mb-6">No meetings match your current filter</p>
+            <button
+              onClick={() => navigate('/meetings/create')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 backdrop-blur-md text-white rounded-xl hover:bg-white/20 transition-all"
+            >
+              <FaPlus />
+              <span>Schedule Your First Meeting</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMeetings.map((meeting) => (
+              <div key={meeting._id} className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 border border-white/20">
+                {/* Meeting Header */}
+                <div className="p-5 border-b border-white/20">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-xl font-bold text-white">{meeting.title}</h3>
+                    {getStatusBadge(meeting.status)}
+                  </div>
+                  <p className="text-white/70 text-sm line-clamp-2">{meeting.description}</p>
+                </div>
+                
+                {/* Meeting Details */}
+                <div className="p-5 space-y-3">
+                  <div className="flex items-center gap-3 text-white/80 text-sm">
+                    <FaCalendarAlt className="text-primary-400" />
+                    <span>{new Date(meeting.meetingDate).toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-white/80 text-sm">
+                    <FaClock className="text-primary-400" />
+                    <span>{meeting.startTime} - {meeting.endTime}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-white/80 text-sm">
+                    <FaMapMarkerAlt className="text-primary-400" />
+                    <span>{meeting.location}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-white/80 text-sm">
+                    <FaUserTie className="text-primary-400" />
+                    <span>{meeting.meetingLeader?.name} ({meeting.meetingLeader?.position})</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-white/80 text-sm">
+                    <FaUsers className="text-primary-400" />
+                    <span>{meeting.participantCount || 0} participants</span>
+                  </div>
+                </div>
+                
+                {/* Actions */}
+                <div className="p-4 bg-black/20 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => viewParticipants(meeting)}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-500/20 text-blue-200 rounded-lg hover:bg-blue-500/30 transition-all text-sm"
+                  >
+                    <FaEye />
+                    <span>View</span>
+                  </button>
+                  
+                  <div className="relative group">
+                    <button
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-500/20 text-green-200 rounded-lg hover:bg-green-500/30 transition-all text-sm"
+                      disabled={exporting}
+                    >
+                      <FaFileDownload />
+                      <span>Export</span>
+                    </button>
+                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex flex-col gap-1 bg-gray-800 rounded-lg p-2 min-w-[120px] z-10">
+                      <button
+                        onClick={() => exportMeeting(meeting._id, 'pdf')}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
+                      >
+                        <FaFilePdf className="text-red-400" />
+                        PDF
+                      </button>
+                      <button
+                        onClick={() => exportMeeting(meeting._id, 'excel')}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
+                      >
+                        <FaFileExcel className="text-green-400" />
+                        Excel
+                      </button>
+                      <button
+                        onClick={() => exportMeeting(meeting._id, 'html')}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-white hover:bg-gray-700 rounded transition"
+                      >
+                        <FaFileCode className="text-blue-400" />
+                        HTML
+                      </button>
                     </div>
                   </div>
-                  {p.signature && (
-                    <div style={styles.signaturePreview}>
-                      <img src={p.signature} alt="Signature" style={styles.signatureImg} />
-                    </div>
+                  
+                  {meeting.status !== 'completed' && meeting.status !== 'cancelled' && (
+                    <select
+                      onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)}
+                      value={meeting.status}
+                      className="px-3 py-2 bg-white/10 text-white rounded-lg text-sm border border-white/20 focus:outline-none"
+                    >
+                      <option value="scheduled" className="text-gray-900">Scheduled</option>
+                      <option value="ongoing" className="text-gray-900">Ongoing</option>
+                      <option value="completed" className="text-gray-900">Completed</option>
+                      <option value="cancelled" className="text-gray-900">Cancelled</option>
+                    </select>
                   )}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Participants Modal */}
+      {showParticipants && selectedMeeting && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowParticipants(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4">
+              <h2 className="text-xl font-bold text-white">Meeting Participants</h2>
+              <p className="text-white/80 text-sm">{selectedMeeting.title} - {selectedMeeting.totalParticipants} participants</p>
+            </div>
+            <div className="overflow-y-auto max-h-[calc(80vh-80px)] p-6">
+              {selectedMeeting.participants && selectedMeeting.participants.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedMeeting.participants.map((participant, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="mb-3 sm:mb-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">{idx + 1}.</span>
+                          <span className="font-medium text-gray-800">{participant.fullName}</span>
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {participant.institution} - {participant.position}
+                        </div>
+                        {participant.email && (
+                          <div className="text-xs text-gray-400 mt-1">{participant.email}</div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">
+                          Signed: {new Date(participant.signedAt).toLocaleString()}
+                        </div>
+                      </div>
+                      {participant.signature && (
+                        <div className="border border-gray-200 rounded-lg p-2 bg-white">
+                          <img src={participant.signature} alt="Signature" className="max-w-[120px] max-h-[40px]" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FaSignature className="text-5xl text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No participants have signed in yet</p>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-gray-200 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setShowParticipants(false)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-    padding: '24px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '32px',
-    flexWrap: 'wrap',
-    gap: '16px'
-  },
-  title: {
-    fontSize: '28px',
-    color: '#1e293b',
-    margin: 0
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#64748b',
-    marginTop: '8px'
-  },
-  createBtn: {
-    background: '#3b82f6',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500'
-  },
-  filters: {
-    display: 'flex',
-    gap: '12px',
-    marginBottom: '24px'
-  },
-  filterSelect: {
-    padding: '8px 12px',
-    border: '1px solid #cbd5e1',
-    borderRadius: '8px',
-    fontSize: '14px'
-  },
-  meetingsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-    gap: '20px'
-  },
-  meetingCard: {
-    background: 'white',
-    border: '1px solid #e2e8f0',
-    borderRadius: '12px',
-    padding: '20px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '16px'
-  },
-  meetingTitle: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: '#1e293b',
-    margin: '0 0 4px 0'
-  },
-  meetingDate: {
-    fontSize: '13px',
-    color: '#64748b',
-    margin: 0
-  },
-  meetingDetails: {
-    marginBottom: '16px',
-    padding: '12px',
-    background: '#f8fafc',
-    borderRadius: '8px'
-  },
-  detailRow: {
-    fontSize: '13px',
-    marginBottom: '6px',
-    display: 'flex',
-    gap: '8px'
-  },
-  detailLabel: {
-    fontWeight: '500',
-    color: '#475569',
-    minWidth: '70px'
-  },
-  cardActions: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap'
-  },
-  signInBtn: {
-    background: '#22c55e',
-    color: 'white',
-    border: 'none',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '13px'
-  },
-  viewBtn: {
-    background: '#8b5cf6',
-    color: 'white',
-    border: 'none',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '13px'
-  },
-  statusSelect: {
-    padding: '6px 10px',
-    border: '1px solid #cbd5e1',
-    borderRadius: '6px',
-    fontSize: '12px'
-  },
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000
-  },
-  participantsModal: {
-    background: 'white',
-    borderRadius: '12px',
-    width: '90%',
-    maxWidth: '600px',
-    maxHeight: '80vh',
-    overflow: 'auto'
-  },
-  modalHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '16px 20px',
-    borderBottom: '1px solid #e2e8f0'
-  },
-  closeModalBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '28px',
-    cursor: 'pointer'
-  },
-  participantsList: {
-    padding: '16px'
-  },
-  participantItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px',
-    borderBottom: '1px solid #f0f0f0'
-  },
-  participantInfo: {
-    flex: 1
-  },
-  signaturePreview: {
-    marginLeft: '12px'
-  },
-  signatureImg: {
-    maxWidth: '100px',
-    maxHeight: '40px',
-    border: '1px solid #ddd',
-    borderRadius: '4px'
-  },
-  loading: {
-    textAlign: 'center',
-    padding: '50px',
-    fontSize: '18px',
-    color: '#64748b'
-  }
 };
 
 export default Meetings;
