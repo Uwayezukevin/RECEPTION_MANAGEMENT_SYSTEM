@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Fixed with proper authentication
+// src/pages/Home.jsx - Fixed with QR Code as primary
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -20,7 +20,8 @@ import {
   FaCalendarAlt,
   FaSpinner,
 } from "react-icons/fa";
-import { MdLocationOn, MdEmail,MdAdminPanelSettings } from "react-icons/md";
+import { MdAdminPanelSettings } from "react-icons/md";
+import { MdLocationOn, MdEmail } from "react-icons/md";
 import logo from "../assets/image.png";
 import QRCode from "../assets/frame (3).png";
 
@@ -28,25 +29,19 @@ const Home = () => {
   const navigate = useNavigate();
   const { user, loading, isAdmin, isReceptionist } = useAuth();
 
-  // Handle navigation with authentication check
   const handleProtectedNavigation = (path, requiredRole = null) => {
     if (!user) {
-      // Redirect to login if not authenticated
       navigate("/login");
       return;
     }
-
-    // Check role requirements
     if (requiredRole === "admin" && !isAdmin()) {
       navigate("/receptionist-dashboard");
       return;
     }
-
     if (requiredRole === "receptionist" && !isReceptionist() && !isAdmin()) {
       navigate("/admin/dashboard");
       return;
     }
-
     navigate(path);
   };
 
@@ -127,14 +122,22 @@ const Home = () => {
               Streamline your visitor registration and service requests. Fast,
               efficient, and completely digital.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+            
+            {/* QR Code Section - Primary */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
               <Link
                 to="/visitor-service"
-                className="bg-gradient-to-r from-yellow-500 to-pink-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl hover:from-yellow-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2 shadow-lg text-sm sm:text-base"
+                className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg hover:scale-105 transition-all duration-300"
               >
-                <FaUserCheck />
-                <span>Register as Visitor</span>
-                <FaArrowRight />
+                <img
+                  src={QRCode}
+                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain mb-2"
+                  alt="Scan QR code to register"
+                />
+                <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">
+                  Scan to continue <br className="hidden sm:block" />
+                  as a visitor
+                </span>
               </Link>
               
               {!user && (
@@ -198,13 +201,13 @@ const Home = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 text-center hover:transform hover:scale-105 transition-all duration-300">
             <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <FaIdCard className="text-white text-xl sm:text-2xl" />
+              <img src={QRCode} className="w-8 h-8 sm:w-10 sm:h-10 object-contain" alt="QR" />
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
-              1. Register
+              1. Scan QR Code
             </h3>
             <p className="text-white/80 text-sm sm:text-base">
-              Fill in your details to register as a visitor at the reception
+              Scan the QR code at the reception to start your registration
             </p>
           </div>
 
@@ -213,10 +216,10 @@ const Home = () => {
               <FaClipboardList className="text-white text-xl sm:text-2xl" />
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
-              2. Request Service
+              2. Fill Details
             </h3>
             <p className="text-white/80 text-sm sm:text-base">
-              Choose the service you need and submit your request
+              Fill in your details and select the service you need
             </p>
           </div>
 
