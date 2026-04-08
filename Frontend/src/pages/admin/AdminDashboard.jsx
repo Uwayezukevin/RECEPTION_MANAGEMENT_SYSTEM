@@ -20,9 +20,10 @@ import {
   FaUserPlus,
   FaTrashAlt,
   FaEdit,
-  FaEye
+  FaEye,
+  FaUserTie  // ✅ Added FaUserTie for receptionist icon
 } from "react-icons/fa";
-import { MdAdminPanelSettings, MdReception, MdSecurity } from "react-icons/md";
+import { MdAdminPanelSettings, MdSecurity } from "react-icons/md";  // ✅ Removed MdReception
 import API from "../../service/api";
 
 const AdminDashboard = () => {
@@ -114,7 +115,7 @@ const AdminDashboard = () => {
     { 
       title: 'Receptionists', 
       value: stats.totalReceptionists, 
-      icon: MdReception, 
+      icon: FaUserTie,  // ✅ Changed from MdReception to FaUserTie
       color: 'bg-green-500',
       link: '/admin/users?role=receptionist',
       description: 'Staff accounts'
