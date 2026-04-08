@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ==================== CREATE MEETING ====================
+// controllers/meetingController.js - Updated CreateMeeting
 export const CreateMeeting = async (req, res) => {
   try {
     const {
@@ -21,7 +21,7 @@ export const CreateMeeting = async (req, res) => {
       endTime,
       location,
       meetingType,
-      minutes
+      notes
     } = req.body;
 
     // Validate required fields
@@ -46,7 +46,7 @@ export const CreateMeeting = async (req, res) => {
       location: location || 'Main Conference Room',
       meetingType: meetingType || 'weekly',
       createdBy: req.user.id,
-      minutes: minutes || '',
+      notes: notes || '',
       status: 'scheduled'
     });
 
@@ -59,17 +59,29 @@ export const CreateMeeting = async (req, res) => {
     if (staffUsers.length > 0) {
       const notifications = staffUsers.map(staff => ({
         recipient: staff._id,
-        type: 'meeting_created',
+        type: 'meeting_created',  // ✅ This is now valid
         title: 'New Meeting Scheduled',
         message: `${savedMeeting.title} scheduled for ${new Date(savedMeeting.meetingDate).toLocaleDateString()} at ${savedMeeting.startTime}`,
+        relatedMeeting: savedMeeting._id,
         metadata: {
           meetingId: savedMeeting._id,
+          meetingTitle: savedMeeting.title,
           meetingDate: savedMeeting.meetingDate,
-          location: savedMeeting.location
+          location: savedMeeting.location,
+          startTime: savedMeeting.startTime
         }
       }));
       
       await Notification.insertMany(notifications);
+      console.log(`✅ Created ${notifications.length} notifications for staff`);
+    }
+
+    // Emit socket event for real-time notification
+    if (req.io) {
+      req.io.emit('meeting-created', {
+        meeting: savedMeeting,
+        message: `New meeting scheduled: ${savedMeeting.title}`
+      });
     }
 
     res.status(201).json({
@@ -86,7 +98,6 @@ export const CreateMeeting = async (req, res) => {
     });
   }
 };
-
 // ==================== ADD PARTICIPANT TO MEETING ====================
 export const AddParticipant = async (req, res) => {
   try {
