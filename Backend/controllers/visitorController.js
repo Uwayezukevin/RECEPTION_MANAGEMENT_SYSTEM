@@ -1,19 +1,250 @@
-// controllers/visitorController.js
+// controllers/visitorController.js - With Combined Visitor + Request Creation
 import Visitor from '../models/Visitor.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
+import Request from '../models/Request.js';
+import Service from '../models/Service.js';
 
-export const CreateVisitor = async (req, res) => {
+// ==================== COMBINED: CREATE VISITOR WITH SERVICE REQUEST ====================
+export const CreateVisitorWithRequest = async (req, res) => {
   try {
-    const { fullName, institution, contactType, contactValue, email } = req.body;
+    const { 
+      fullName, 
+      nationality, 
+      email,
+      phoneNumber,
+      passportNumber,
+      service,
+      eventDate,
+      message
+    } = req.body;
 
-    console.log("Creating visitor with data:", { fullName, institution, contactType, contactValue, email });
+    console.log("Creating visitor with service request:", { 
+      fullName, 
+      nationality, 
+      email,
+      phoneNumber,
+      passportNumber,
+      service,
+      eventDate
+    });
 
-    // Validate required fields
-    if (!fullName || !institution || !contactType || !contactValue || !email) {
+    // ==================== VALIDATION ====================
+    
+    // Validate nationality
+    if (!nationality || !['rwandan', 'foreigner'].includes(nationality)) {
       return res.status(400).json({ 
         success: false,
-        msg: "All fields are required" 
+        msg: "Valid nationality is required (rwandan or foreigner)" 
+      });
+    }
+
+    // Validate email
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        msg: "Email is required" 
+      });
+    }
+
+    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        msg: "Please enter a valid email address"
+      });
+    }
+
+    // Validate full name
+    if (!fullName) {
+      return res.status(400).json({
+        success: false,
+        msg: "Full name is required"
+      });
+    }
+
+    // Validate service request fields
+    if (!service) {
+      return res.status(400).json({
+        success: false,
+        msg: "Service is required"
+      });
+    }
+
+    if (!eventDate) {
+      return res.status(400).json({
+        success: false,
+        msg: "Event date is required"
+      });
+    }
+
+    // Prepare visitor data based on nationality
+    let visitorData = {
+      fullName: fullName.trim(),
+      email: email.toLowerCase().trim(),
+      nationality,
+      status: 'checked-in',
+      checkInTime: new Date()
+    };
+
+    if (nationality === 'rwandan') {
+      // Rwandan must have phone number
+      if (!phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          msg: "Phone number is required for Rwandan citizens"
+        });
+      }
+      visitorData.contactType = 'Phone';
+      visitorData.contactValue = phoneNumber.trim();
+      
+    } else {
+      // Foreigner - either passport or phone number
+      if (passportNumber) {
+        visitorData.contactType = 'Passport';
+        visitorData.contactValue = passportNumber.trim();
+        visitorData.passportNumber = passportNumber.trim();
+      } else if (phoneNumber) {
+        visitorData.contactType = 'Phone';
+        visitorData.contactValue = phoneNumber.trim();
+      } else {
+        return res.status(400).json({
+          success: false,
+          msg: "Either Passport Number or Phone Number is required for foreign visitors"
+        });
+      }
+    }
+
+    // Check how many times this visitor has visited before
+    const previousVisits = await Visitor.countDocuments({
+      $or: [
+        { email: visitorData.email },
+        { contactValue: visitorData.contactValue }
+      ]
+    });
+
+    visitorData.visitNumber = previousVisits + 1;
+    visitorData.previousVisits = previousVisits;
+
+    // ==================== CREATE VISITOR ====================
+    const newVisitor = new Visitor(visitorData);
+    const savedVisitor = await newVisitor.save();
+    console.log("Visitor saved:", savedVisitor);
+
+    // ==================== CREATE SERVICE REQUEST ====================
+    // Check if service exists
+    const serviceExists = await Service.findById(service);
+    
+    if (!serviceExists) {
+      return res.status(404).json({
+        success: false,
+        msg: "Service not found",
+        visitor: savedVisitor
+      });
+    }
+
+    // Create request (without priority)
+    const newRequest = new Request({
+      visitor: savedVisitor._id,
+      service,
+      eventDate: new Date(eventDate),
+      message: message || "",
+      status: "pending"
+    });
+
+    const savedRequest = await newRequest.save();
+    await savedRequest.populate("visitor");
+    await savedRequest.populate("service");
+    console.log("Service request saved:", savedRequest);
+
+    // ==================== CREATE NOTIFICATIONS ====================
+    const staffUsers = await User.find({ role: "receptionist" });
+
+    if (staffUsers.length > 0) {
+      const notifications = staffUsers.map((staff) => ({
+        recipient: staff._id,
+        type: "request_created",
+        title: "New Service Request",
+        message: `${savedVisitor.fullName} (${nationality}) requested ${serviceExists.name}`,
+        relatedRequest: savedRequest._id,
+        relatedVisitor: savedVisitor._id,
+        metadata: {
+          service: serviceExists.name,
+          visitorEmail: savedVisitor.email,
+          visitorPhone: savedVisitor.contactValue,
+          nationality
+        },
+      }));
+
+      await Notification.insertMany(notifications);
+      console.log(`✅ Created ${notifications.length} notifications for staff`);
+    }
+
+    // ==================== REAL-TIME UPDATE ====================
+    if (req.io) {
+      req.io.emit("new-request", {
+        request: savedRequest,
+        visitor: savedVisitor
+      });
+    }
+
+    // ==================== RESPONSE ====================
+    const welcomeMessage = previousVisits === 0
+      ? `Welcome${nationality === 'rwandan' ? ' back' : ''}! Your registration and service request have been submitted successfully.`
+      : `Welcome back${nationality === 'rwandan' ? ' home' : ''}! This is your ${previousVisits + 1}th visit. Your service request has been submitted.`;
+
+    res.status(201).json({
+      success: true,
+      msg: welcomeMessage,
+      visitor: savedVisitor,
+      request: savedRequest,
+      isReturning: previousVisits > 0,
+      visitNumber: previousVisits + 1,
+      nationality
+    });
+    
+  } catch (err) {
+    console.error("Error creating visitor with request:", err);
+    res.status(500).json({ 
+      success: false,
+      msg: err.message 
+    });
+  }
+};
+
+// ==================== ORIGINAL CREATE VISITOR (Keep for compatibility) ====================
+export const CreateVisitor = async (req, res) => {
+  try {
+    const { 
+      fullName, 
+      contactType, 
+      contactValue, 
+      email, 
+      nationality,
+      passportNumber 
+    } = req.body;
+
+    console.log("Creating visitor with data:", { 
+      fullName, 
+      contactType, 
+      contactValue, 
+      email, 
+      nationality,
+      passportNumber 
+    });
+
+    // Validate required fields based on nationality
+    if (!nationality) {
+      return res.status(400).json({ 
+        success: false,
+        msg: "Nationality is required" 
+      });
+    }
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        msg: "Email is required" 
       });
     }
 
@@ -26,37 +257,83 @@ export const CreateVisitor = async (req, res) => {
       });
     }
 
+    let visitorData = {
+      email: email.toLowerCase().trim(),
+      nationality,
+      status: 'checked-in',
+      checkInTime: new Date()
+    };
+
+    if (nationality === 'rwandan') {
+      // Rwandan validation
+      if (!contactValue) {
+        return res.status(400).json({
+          success: false,
+          msg: "Phone number is required for Rwandan citizens"
+        });
+      }
+      
+      if (!fullName) {
+        return res.status(400).json({
+          success: false,
+          msg: "Full name is required"
+        });
+      }
+      
+      visitorData.fullName = fullName.trim();
+      visitorData.contactType = 'Phone';
+      visitorData.contactValue = contactValue.trim();
+      
+    } else {
+      // Foreigner validation
+      if (!fullName) {
+        return res.status(400).json({
+          success: false,
+          msg: "Full name is required for foreign visitors"
+        });
+      }
+      
+      visitorData.fullName = fullName.trim();
+      
+      // Handle contact (either phone or passport)
+      if (passportNumber) {
+        visitorData.contactType = 'Passport';
+        visitorData.contactValue = passportNumber.trim();
+        visitorData.passportNumber = passportNumber.trim();
+      } else if (contactValue) {
+        visitorData.contactType = 'Phone';
+        visitorData.contactValue = contactValue.trim();
+      } else {
+        return res.status(400).json({
+          success: false,
+          msg: "Either Passport Number or Phone Number is required"
+        });
+      }
+    }
+
     // Check how many times this visitor has visited before
     const previousVisits = await Visitor.countDocuments({
       $or: [
-        { email: email.toLowerCase().trim() },
-        { contactValue: contactValue.trim() }
+        { email: visitorData.email },
+        { contactValue: visitorData.contactValue }
       ]
     });
 
+    visitorData.visitNumber = previousVisits + 1;
+    visitorData.previousVisits = previousVisits;
+
     // Create new visitor record
-    const newVisitor = new Visitor({
-      fullName: fullName.trim(),
-      institution: institution.trim(),
-      contactType,
-      contactValue: contactValue.trim(),
-      email: email.toLowerCase().trim(),
-      status: 'checked-in',
-      checkInTime: new Date(),
-      visitNumber: previousVisits + 1,
-      previousVisits: previousVisits
-    });
-    
+    const newVisitor = new Visitor(visitorData);
     const savedVisitor = await newVisitor.save();
     console.log("Visitor saved:", savedVisitor);
 
-    // Create notification for all receptionists (if any exist)
+    // Create notification for all receptionists
     const receptionists = await User.find({ role: 'receptionist' });
     
     if (receptionists.length > 0) {
       const visitMessage = previousVisits === 0 
-        ? `${fullName} from ${institution} is visiting for the first time`
-        : `${fullName} from ${institution} is visiting for the ${previousVisits + 1}th time`;
+        ? `${savedVisitor.fullName} (${nationality}) is visiting for the first time`
+        : `${savedVisitor.fullName} (${nationality}) is visiting for the ${previousVisits + 1}th time`;
       
       const notifications = receptionists.map(staff => ({
         recipient: staff._id,
@@ -66,9 +343,9 @@ export const CreateVisitor = async (req, res) => {
         relatedVisitor: savedVisitor._id,
         metadata: {
           visitorId: savedVisitor._id,
-          institution,
-          contactValue,
-          email,
+          nationality,
+          contactValue: savedVisitor.contactValue,
+          email: savedVisitor.email,
           visitNumber: previousVisits + 1,
           previousVisits
         }
@@ -79,7 +356,7 @@ export const CreateVisitor = async (req, res) => {
     }
 
     const welcomeMessage = previousVisits === 0
-      ? "Welcome! This is your first visit. You can now request services."
+      ? `Welcome! Your registration is complete. You can now request services.`
       : `Welcome back! This is your ${previousVisits + 1}th visit. You can now request services.`;
 
     res.status(201).json({
@@ -87,8 +364,10 @@ export const CreateVisitor = async (req, res) => {
       msg: welcomeMessage,
       visitor: savedVisitor,
       isReturning: previousVisits > 0,
-      visitNumber: previousVisits + 1
+      visitNumber: previousVisits + 1,
+      nationality
     });
+    
   } catch (err) {
     console.error("Error creating visitor:", err);
     res.status(500).json({ 
@@ -99,17 +378,16 @@ export const CreateVisitor = async (req, res) => {
   }
 };
 
+// ==================== OTHER CONTROLLER FUNCTIONS ====================
 export const GetVisitors = async (req, res) => {
   try {
     const { status, startDate, endDate, search, limit = 100 } = req.query;
     let filter = {};
 
-    // Status filter
     if (status && status !== 'all') {
       filter.status = status;
     }
 
-    // Date range filter
     if (startDate && endDate) {
       filter.checkInTime = {
         $gte: new Date(startDate),
@@ -117,17 +395,16 @@ export const GetVisitors = async (req, res) => {
       };
     }
 
-    // Search filter
     if (search) {
       filter.$or = [
         { fullName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
-        { institution: { $regex: search, $options: 'i' } },
         { contactValue: { $regex: search, $options: 'i' } }
       ];
     }
 
     const visitors = await Visitor.find(filter)
+      .select('-__v')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit));
 
@@ -147,7 +424,7 @@ export const GetVisitors = async (req, res) => {
 
 export const GetVisitorById = async (req, res) => {
   try {
-    const visitor = await Visitor.findById(req.params.id);
+    const visitor = await Visitor.findById(req.params.id).select('-__v');
 
     if (!visitor) {
       return res.status(404).json({ 
@@ -156,13 +433,12 @@ export const GetVisitorById = async (req, res) => {
       });
     }
 
-    // Also get visitor's visit history
     const visitHistory = await Visitor.find({
       $or: [
         { email: visitor.email },
         { contactValue: visitor.contactValue }
       ]
-    }).sort({ createdAt: -1 });
+    }).select('-__v').sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -200,7 +476,6 @@ export const CheckOutVisitor = async (req, res) => {
     visitor.status = 'checked-out';
     await visitor.save();
 
-    // Create notification for receptionists
     const receptionists = await User.find({ role: 'receptionist' });
     
     if (receptionists.length > 0) {
@@ -246,13 +521,8 @@ export const GetVisitorStats = async (req, res) => {
       checkInTime: { $gte: today }
     });
 
-    // Get unique visitors count (by email)
     const uniqueVisitors = await Visitor.distinct('email');
-    
-    // Get returning visitors count (visits > 1)
     const returningVisitors = await Visitor.countDocuments({ visitNumber: { $gt: 1 } });
-    
-    // Get average visits per visitor
     const avgVisits = totalVisits / (uniqueVisitors.length || 1);
 
     res.json({
@@ -276,7 +546,6 @@ export const GetVisitorStats = async (req, res) => {
   }
 };
 
-// Get visitor history by email or contact
 export const GetVisitorHistory = async (req, res) => {
   try {
     const { identifier } = req.params;
@@ -286,7 +555,7 @@ export const GetVisitorHistory = async (req, res) => {
         { email: identifier },
         { contactValue: identifier }
       ]
-    }).sort({ createdAt: -1 });
+    }).select('-__v').sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -302,10 +571,10 @@ export const GetVisitorHistory = async (req, res) => {
   }
 };
 
-// Get currently checked-in visitors
 export const GetCheckedInVisitors = async (req, res) => {
   try {
     const visitors = await Visitor.find({ status: 'checked-in' })
+      .select('-__v')
       .sort({ checkInTime: -1 });
     
     res.json({
@@ -322,7 +591,6 @@ export const GetCheckedInVisitors = async (req, res) => {
   }
 };
 
-// Search visitors
 export const SearchVisitors = async (req, res) => {
   try {
     const { query } = req.query;
@@ -338,10 +606,9 @@ export const SearchVisitors = async (req, res) => {
       $or: [
         { fullName: { $regex: query, $options: 'i' } },
         { email: { $regex: query, $options: 'i' } },
-        { institution: { $regex: query, $options: 'i' } },
         { contactValue: { $regex: query, $options: 'i' } }
       ]
-    }).sort({ createdAt: -1 }).limit(50);
+    }).select('-__v').sort({ createdAt: -1 }).limit(50);
     
     res.json({
       success: true,

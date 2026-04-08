@@ -1,4 +1,4 @@
-// models/Visitor.js
+// models/Visitor.js - Updated (institution removed)
 import mongoose from 'mongoose';
 
 const visitorSchema = new mongoose.Schema({
@@ -9,11 +9,10 @@ const visitorSchema = new mongoose.Schema({
     minlength: [2, 'Full name must be at least 2 characters'],
     maxlength: [100, 'Full name cannot exceed 100 characters']
   },
-  institution: {
+  nationality: {
     type: String,
-    required: [true, 'Institution is required'],
-    trim: true,
-    maxlength: [200, 'Institution name cannot exceed 200 characters']
+    enum: ['rwandan', 'foreigner'],
+    required: [true, 'Nationality is required']
   },
   contactType: {
     type: String,
@@ -25,15 +24,17 @@ const visitorSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone/Passport number is required'],
     trim: true
-    // Removed unique: true - allow multiple registrations with same contact
   },
   email: {
     type: String,
     required: [true, 'Email is required'],
     trim: true,
     lowercase: true
-    // Removed unique: true - allow multiple registrations with same email
-    // Removed match - we'll validate in controller
+  },
+  passportNumber: {
+    type: String,
+    trim: true,
+    sparse: true
   },
   checkInTime: {
     type: Date,
@@ -59,9 +60,10 @@ const visitorSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create indexes for better search performance (not unique)
+// Create indexes for better search performance
 visitorSchema.index({ email: 1 });
 visitorSchema.index({ contactValue: 1 });
+visitorSchema.index({ nationality: 1 });
 visitorSchema.index({ createdAt: -1 });
 
 const Visitor = mongoose.model('Visitor', visitorSchema);
