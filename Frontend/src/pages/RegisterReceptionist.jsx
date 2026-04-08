@@ -12,10 +12,11 @@ import {
   FaShieldAlt,
   FaKey,
   FaSpinner,
-  FaArrowLeft
+  FaArrowLeft,
+  FaUserTie,  // ✅ Replace RiReceptionistLine with this
+  FaUserCog   // ✅ Alternative for receptionist
 } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
-import { RiReceptionistLine } from "react-icons/ri";
 import API from "../service/api";
 import toast from "react-hot-toast";
 import logo from "../assets/image.png";
@@ -194,7 +195,7 @@ const RegisterReceptionist = () => {
                       : "border-gray-200 hover:border-gray-300 text-gray-600"
                   }`}
                 >
-                  <RiReceptionistLine className="text-lg" />
+                  <FaUserTie className="text-lg" />  {/* ✅ Fixed icon */}
                   <span className="font-medium">Receptionist</span>
                 </button>
                 <button

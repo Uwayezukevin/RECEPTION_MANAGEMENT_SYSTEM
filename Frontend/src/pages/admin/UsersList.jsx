@@ -1,4 +1,4 @@
-// src/pages/admin/UsersList.jsx
+// src/pages/admin/UsersList.jsx - Fixed imports
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -10,9 +10,11 @@ import {
   FaSpinner,
   FaSearch,
   FaEnvelope,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaUserTie,  // ✅ Replace MdReception with this
+  FaUserCog   // ✅ Alternative
 } from "react-icons/fa";
-import { MdAdminPanelSettings, MdReception } from "react-icons/md";
+import { MdAdminPanelSettings } from "react-icons/md";
 import API from "../../service/api";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -76,7 +78,7 @@ const UsersList = () => {
     }
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium">
-        <MdReception className="text-sm" />
+        <FaUserTie className="text-sm" />  {/* ✅ Fixed icon */}
         Receptionist
       </span>
     );
