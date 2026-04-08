@@ -12,6 +12,7 @@ const MeetingSignInPage = () => {
   const navigate = useNavigate();
   const [meeting, setMeeting] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -24,19 +25,42 @@ const MeetingSignInPage = () => {
   useEffect(() => {
     if (meetingId) {
       fetchMeetingDetails();
+    } else {
+      setError('No meeting ID provided');
+      setLoading(false);
     }
   }, [meetingId]);
 
   const fetchMeetingDetails = async () => {
     try {
       setLoading(true);
-      console.log('Fetching meeting:', meetingId);
-      const response = await API.get(`/meetings/${meetingId}`);
-      console.log('Meeting response:', response.data);
-      setMeeting(response.data.meeting);
+      setError(null);
+      
+      console.log('Fetching meeting with ID:', meetingId);
+      
+      // ✅ Use the specific API method
+      const response = await API.getMeetingById(meetingId);
+      
+      console.log('Response:', response.data);
+      
+      if (response.data.success && response.data.meeting) {
+        setMeeting(response.data.meeting);
+      } else {
+        setError('Meeting not found');
+        toast.error('Meeting not found');
+      }
     } catch (error) {
       console.error('Error fetching meeting:', error);
-      toast.error('Meeting not found or invalid link');
+      let errorMsg = 'Meeting not found or invalid link';
+      if (error.response?.data?.msg) {
+        errorMsg = error.response.data.msg;
+      } else if (error.response?.status === 404) {
+        errorMsg = 'Meeting not found';
+      } else if (error.response?.status === 500) {
+        errorMsg = 'Server error. Please try again later.';
+      }
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -65,6 +89,7 @@ const MeetingSignInPage = () => {
     setSubmitting(true);
     
     try {
+      // ✅ Use the specific API method
       const response = await API.addMeetingParticipant(meetingId, {
         fullName: formData.fullName,
         institution: formData.institution,
@@ -75,11 +100,9 @@ const MeetingSignInPage = () => {
       
       if (response.data.success) {
         toast.success(response.data.msg || 'Successfully signed in!');
-        // Reset form
         setFormData({ fullName: '', institution: '', position: '', email: '' });
         setSignature(null);
         
-        // Redirect after 2 seconds
         setTimeout(() => {
           navigate('/');
         }, 2000);
@@ -98,18 +121,19 @@ const MeetingSignInPage = () => {
         <div className="text-center">
           <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
           <p className="text-white text-lg">Loading meeting details...</p>
+          <p className="text-white/60 text-sm mt-2">Meeting ID: {meetingId}</p>
         </div>
       </div>
     );
   }
 
-  if (!meeting) {
+  if (error || !meeting) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center">
         <div className="text-center text-white">
           <FaUserCircle className="text-6xl mx-auto mb-4 text-white/50" />
           <h2 className="text-2xl font-bold mb-2">Meeting Not Found</h2>
-          <p className="text-white/70 mb-6">The meeting you're looking for doesn't exist or has been removed.</p>
+          <p className="text-white/70 mb-6">{error || 'The meeting you\'re looking for doesn\'t exist or has been removed.'}</p>
           <button
             onClick={() => navigate('/')}
             className="px-6 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition"
@@ -175,7 +199,6 @@ const MeetingSignInPage = () => {
           </div>
           
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name <span className="text-red-500">*</span>
@@ -194,7 +217,6 @@ const MeetingSignInPage = () => {
               </div>
             </div>
 
-            {/* Institution */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Institution/Department <span className="text-red-500">*</span>
@@ -213,7 +235,6 @@ const MeetingSignInPage = () => {
               </div>
             </div>
 
-            {/* Position */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Position <span className="text-red-500">*</span>
@@ -229,7 +250,6 @@ const MeetingSignInPage = () => {
               />
             </div>
 
-            {/* Email (Optional) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email <span className="text-gray-400 text-xs">(Optional)</span>
@@ -247,7 +267,6 @@ const MeetingSignInPage = () => {
               </div>
             </div>
 
-            {/* Signature Pad */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Digital Signature <span className="text-red-500">*</span>
@@ -260,7 +279,6 @@ const MeetingSignInPage = () => {
               />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}
@@ -281,7 +299,6 @@ const MeetingSignInPage = () => {
           </form>
         </div>
 
-        {/* Footer Note */}
         <p className="text-center text-white/60 text-xs mt-6">
           Your signature confirms your attendance at this meeting
         </p>
