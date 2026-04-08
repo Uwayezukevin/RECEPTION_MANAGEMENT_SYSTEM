@@ -16,7 +16,8 @@ export const GetMyNotifications = async (req, res) => {
         .skip(parseInt(skip))
         .limit(parseInt(limit))
         .populate('relatedRequest', 'service status priority')
-        .populate('relatedVisitor', 'fullName email institution'),
+        .populate('relatedVisitor', 'fullName email institution')
+        .populate('relatedMeeting', 'title meetingDate startTime location status'), // ✅ Added meeting population
       Notification.countDocuments(filter)
     ]);
 
@@ -201,7 +202,8 @@ export const GetUnreadNotifications = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .populate('relatedRequest', 'service status')
-      .populate('relatedVisitor', 'fullName');
+      .populate('relatedVisitor', 'fullName')
+      .populate('relatedMeeting', 'title meetingDate startTime location'); // ✅ Added meeting population
 
     res.json({
       success: true,
@@ -222,7 +224,8 @@ export const GetNotificationById = async (req, res) => {
     const { id } = req.params;
     const notification = await Notification.findById(id)
       .populate('relatedRequest')
-      .populate('relatedVisitor');
+      .populate('relatedVisitor')
+      .populate('relatedMeeting'); // ✅ Added meeting population
 
     if (!notification) {
       return res.status(404).json({ 
