@@ -1,4 +1,4 @@
-// src/service/api.js - Complete updated version with Meeting support
+// src/service/api.js - Complete fixed version
 import axios from "axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
@@ -17,7 +17,7 @@ class APIService {
     this.notificationCallbacks = [];
     this.requestUpdateCallbacks = [];
     
-    // Request interceptor
+    // Request interceptor - FIXED (removed isGetParticipants from public)
     this.api.interceptors.request.use((config) => {
       const publicEndpoints = ['/auth/login', '/auth/register', '/services'];
       const isVisitorRequest = config.method === 'post' && config.url?.match(/\/requests\/[a-f0-9]{24}$/);
@@ -26,7 +26,8 @@ class APIService {
       const isVisitorWithRequest = config.method === 'post' && config.url === '/visitors-with-request';
       const isMeetingSignIn = config.method === 'post' && config.url?.match(/\/meetings\/[a-f0-9]{24}\/participants$/);
       const isGetMeeting = config.method === 'get' && config.url?.match(/\/meetings\/[a-f0-9]{24}$/);
-      const isGetParticipants = config.method === 'get' && config.url?.match(/\/meetings\/[a-f0-9]{24}\/participants$/);
+      
+      // isGetParticipants is REMOVED - now requires authentication
       
       const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint)) ||
                        isVisitorRequest ||
@@ -34,8 +35,7 @@ class APIService {
                        isVisitorRegistration ||
                        isVisitorWithRequest ||
                        isMeetingSignIn ||
-                       isGetMeeting ||
-                       isGetParticipants;
+                       isGetMeeting;
       
       if (!isPublic) {
         const user = localStorage.getItem("user");
@@ -76,7 +76,7 @@ class APIService {
     );
   }
   
-  // Initialize WebSocket for visitors (to get real-time request updates)
+  // Initialize WebSocket for visitors
   initVisitorSocket(requestId) {
     if (this.visitorSocket) {
       this.visitorSocket.disconnect();
@@ -90,7 +90,6 @@ class APIService {
     
     this.visitorSocket.on("connect", () => {
       console.log("Visitor WebSocket connected for request:", requestId);
-      // Join room for this specific request
       this.visitorSocket.emit("join-request-room", requestId);
     });
     
@@ -102,7 +101,6 @@ class APIService {
       console.log("Socket connection error:", error.message);
     });
     
-    // Listen for request status updates
     this.visitorSocket.on("request-updated", (data) => {
       console.log("Request update received:", data);
       this.requestUpdateCallbacks.forEach(cb => cb(data));
@@ -111,7 +109,6 @@ class APIService {
     return this.visitorSocket;
   }
   
-  // Register callback for request updates
   onRequestUpdate(callback) {
     this.requestUpdateCallbacks.push(callback);
     return () => {
@@ -120,7 +117,6 @@ class APIService {
     };
   }
   
-  // Disconnect visitor socket
   disconnectVisitorSocket() {
     if (this.visitorSocket) {
       this.visitorSocket.disconnect();
@@ -128,7 +124,6 @@ class APIService {
     }
   }
   
-  // Staff WebSocket (existing)
   initSocket() {
     const user = localStorage.getItem("user");
     if (user && !this.socket) {
@@ -202,18 +197,12 @@ class APIService {
   markAllNotificationsAsRead = () => this.api.put("/notifications/read-all");
   
   // ==================== MEETING MANAGEMENT ====================
-  
-  // Meeting CRUD
   createMeeting = (data) => this.api.post("/meetings", data);
   getMeetings = (params) => this.api.get("/meetings", { params });
   getMeetingById = (id) => this.api.get(`/meetings/${id}`);
   updateMeetingStatus = (id, data) => this.api.put(`/meetings/${id}/status`, data);
-  
-  // Meeting Participants
   addMeetingParticipant = (meetingId, data) => this.api.post(`/meetings/${meetingId}/participants`, data);
   getMeetingParticipants = (meetingId) => this.api.get(`/meetings/${meetingId}/participants`);
-  
-  // Meeting Stats & Exports
   getMeetingStats = () => this.api.get("/meetings/stats");
   getUpcomingMeetings = () => this.api.get("/meetings/upcoming");
   exportMeetingToPDF = (id) => this.api.get(`/meetings/${id}/export/pdf`, { responseType: 'blob' });
