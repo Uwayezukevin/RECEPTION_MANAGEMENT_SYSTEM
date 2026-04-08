@@ -1,4 +1,4 @@
-// src/service/api.js - Add visitor socket support
+// src/service/api.js - Complete updated version
 import axios from "axios";
 import io from "socket.io-client";
 import toast from "react-hot-toast";
@@ -23,11 +23,13 @@ class APIService {
       const isVisitorRequest = config.method === 'post' && config.url?.match(/\/requests\/[a-f0-9]{24}$/);
       const isGetRequestById = config.method === 'get' && config.url?.match(/\/requests\/[a-f0-9]{24}$/);
       const isVisitorRegistration = config.method === 'post' && config.url === '/visitors';
+      const isVisitorWithRequest = config.method === 'post' && config.url === '/visitors-with-request';
       
       const isPublic = publicEndpoints.some(endpoint => config.url?.includes(endpoint)) ||
                        isVisitorRequest ||
                        isGetRequestById ||
-                       isVisitorRegistration;
+                       isVisitorRegistration ||
+                       isVisitorWithRequest;
       
       if (!isPublic) {
         const user = localStorage.getItem("user");
@@ -165,6 +167,8 @@ class APIService {
   getCurrentUser = () => this.api.get("/auth/me");
   
   createVisitor = (data) => this.api.post("/visitors", data);
+  createVisitorWithRequest = (data) => this.api.post("/visitors-with-request", data); // ✅ ADDED - FIXES THE ERROR
+  
   getVisitors = (params) => this.api.get("/visitors", { params });
   getVisitorById = (id) => this.api.get(`/visitors/${id}`);
   getVisitorStats = () => this.api.get("/visitors/stats");

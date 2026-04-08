@@ -19,7 +19,7 @@ import {
 } from "react-icons/fa";
 import { MdLocationOn, MdEmail } from "react-icons/md";
 import logo from "../assets/image.png";
-import QRCode from "../assets/frame (2).png";
+import QRCode from "../assets/frame (3).png";
 
 const Home = () => {
   const navigate = useNavigate();
