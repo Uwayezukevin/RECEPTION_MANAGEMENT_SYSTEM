@@ -18,7 +18,7 @@ import {
   FaCalendarWeek,
   FaUserClock,
   FaFileAlt,
-  FaTrendUp,
+  FaChartLine as FaTrendUp,  // ✅ Replace FaTrendUp with FaChartLine
   FaRegCalendarCheck,
   FaUsersSlash
 } from "react-icons/fa";
@@ -224,8 +224,7 @@ const AdminDashboard = () => {
       icon: FaCalendarAlt, 
       color: 'bg-yellow-500', 
       link: '/meetings', 
-      subValue: `${stats.upcomingMeetings} upcoming, ${stats.ongoingMeetings} ongoing`,
-      trend: '+12%'
+      subValue: `${stats.upcomingMeetings} upcoming, ${stats.ongoingMeetings} ongoing`
     },
     { 
       title: 'Visitors', 
@@ -233,8 +232,7 @@ const AdminDashboard = () => {
       icon: FaUserCheck, 
       color: 'bg-indigo-500', 
       link: '/visitors-list', 
-      subValue: `${stats.todayVisitors} today, ${stats.checkedInVisitors} checked in`,
-      trend: '+8%'
+      subValue: `${stats.todayVisitors} today, ${stats.checkedInVisitors} checked in`
     },
     { 
       title: 'Requests', 
@@ -242,8 +240,7 @@ const AdminDashboard = () => {
       icon: FaClipboardList, 
       color: 'bg-pink-500', 
       link: '/visitors-list', 
-      subValue: `${stats.pendingRequests} pending, ${stats.completedRequests} completed`,
-      trend: '-3%'
+      subValue: `${stats.pendingRequests} pending, ${stats.completedRequests} completed`
     },
   ];
 
@@ -396,7 +393,7 @@ const AdminDashboard = () => {
         {/* Recent Activity Section */}
         <div className="mt-6 bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <FaTrendUp className="text-blue-400" />
+            <FaChartLine className="text-blue-400" />
             Recent Activity
           </h2>
           {recentActivities.length > 0 ? (
