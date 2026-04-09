@@ -28,11 +28,6 @@ router.get('/admin/users', authenticate, authorizeAdmin, authController.GetAllUs
 router.put('/admin/users/:id/status', authenticate, authorizeAdmin, authController.UpdateUserStatus);
 router.delete('/admin/users/:id', authenticate, authorizeAdmin, authController.DeleteUser);
 
-// Service Management - ONLY ADMIN (Create, Update, Delete)
-router.post('/services', authenticate, authorizeAdmin, serviceController.CreateService);
-router.put('/services/:id', authenticate, authorizeAdmin, serviceController.UpdateService);
-router.delete('/services/:id', authenticate, authorizeAdmin, serviceController.DeleteService);
-
 // ==================== VISITOR ROUTES (Admin & Receptionist) ====================
 router.get('/visitors', authenticate, authorizeReceptionist, visitorController.GetVisitors);
 router.get('/visitors/stats', authenticate, authorizeReceptionist, visitorController.GetVisitorStats);
