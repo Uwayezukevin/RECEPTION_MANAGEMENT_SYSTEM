@@ -13,16 +13,12 @@ import {
   FaBell,
   FaCheckCircle,
   FaClock,
-  FaUserShield,
   FaWifi,
   FaCalendarWeek,
   FaUserClock,
   FaFileAlt,
-  FaChartLine as FaTrendUp,  // ✅ Replace FaTrendUp with FaChartLine
-  FaRegCalendarCheck,
-  FaUsersSlash
+  FaRegCalendarCheck
 } from "react-icons/fa";
-import { MdAdminPanelSettings, MdPendingActions, MdEventAvailable } from "react-icons/md";
 import API from "../../service/api";
 import toast from "react-hot-toast";
 
@@ -49,11 +45,9 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchDashboardData();
     setupWebSocket();
-    fetchRecentActivities();
     
     const interval = setInterval(() => {
       fetchDashboardData(true);
-      fetchRecentActivities();
     }, 30000);
     
     return () => {
@@ -74,7 +68,6 @@ const AdminDashboard = () => {
       socket.on('connect', () => {
         console.log('WebSocket connected');
         setWsConnected(true);
-        socket.emit('join-admin-room');
       });
       
       socket.on('disconnect', () => {
@@ -86,22 +79,20 @@ const AdminDashboard = () => {
         if (data.stats) {
           setStats(prev => ({ ...prev, ...data.stats }));
           setLastUpdated(new Date());
+          toast.success('Dashboard updated', { icon: '🔄', duration: 2000 });
         }
       });
       
       socket.on('visitor-checked-in', () => {
         fetchDashboardData(true);
-        fetchRecentActivities();
       });
       
       socket.on('new-request', () => {
         fetchDashboardData(true);
-        fetchRecentActivities();
       });
       
       socket.on('meeting-created', () => {
         fetchDashboardData(true);
-        fetchRecentActivities();
       });
     }
   };
@@ -109,22 +100,38 @@ const AdminDashboard = () => {
   const fetchDashboardData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [meetingsRes, visitorsRes, requestsRes] = await Promise.all([
-        API.get('/meetings').catch(() => ({ data: { count: 0, meetings: [] } })),
-        API.get('/visitors').catch(() => ({ data: { count: 0, visitors: [] } })),
-        API.get('/requests').catch(() => ({ data: { count: 0, requests: [] } }))
-      ]);
+      console.log("Fetching dashboard data...");
       
+      // Fetch meetings
+      const meetingsRes = await API.get('/meetings');
+      console.log("Meetings response:", meetingsRes.data);
       const meetings = meetingsRes.data?.meetings || [];
+      
+      // Fetch visitors
+      const visitorsRes = await API.get('/visitors');
+      console.log("Visitors response:", visitorsRes.data);
       const visitors = visitorsRes.data?.visitors || [];
+      
+      // Fetch requests
+      const requestsRes = await API.get('/requests');
+      console.log("Requests response:", requestsRes.data);
       const requests = requestsRes.data?.requests || [];
       
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayVisitors = visitors.filter(v => new Date(v.checkInTime) >= today).length;
+      
+      const todayVisitors = visitors.filter(v => {
+        const checkInDate = new Date(v.checkInTime);
+        return checkInDate >= today;
+      }).length;
+      
       const checkedInVisitors = visitors.filter(v => v.status === 'checked-in').length;
       
-      const upcomingMeetings = meetings.filter(m => m.status === 'scheduled' && new Date(m.meetingDate) >= today).length;
+      const upcomingMeetings = meetings.filter(m => {
+        const meetingDate = new Date(m.meetingDate);
+        return m.status === 'scheduled' && meetingDate >= today;
+      }).length;
+      
       const completedMeetings = meetings.filter(m => m.status === 'completed').length;
       const ongoingMeetings = meetings.filter(m => m.status === 'ongoing').length;
       
@@ -144,20 +151,10 @@ const AdminDashboard = () => {
         completedRequests
       });
       
-    } catch (error) {
-      if (!silent) toast.error("Failed to load dashboard data");
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
-
-  const fetchRecentActivities = async () => {
-    try {
-      const [recentMeetings, recentVisitors, recentRequests] = await Promise.all([
-        API.get('/meetings').then(res => res.data?.meetings?.slice(0, 3) || []),
-        API.get('/visitors').then(res => res.data?.visitors?.slice(0, 3) || []),
-        API.get('/requests').then(res => res.data?.requests?.slice(0, 3) || [])
-      ]);
+      // Fetch recent activities
+      const recentMeetings = meetings.slice(0, 3);
+      const recentVisitors = visitors.slice(0, 3);
+      const recentRequests = requests.slice(0, 3);
       
       const activities = [];
       
@@ -207,7 +204,10 @@ const AdminDashboard = () => {
       setRecentActivities(activities.slice(0, 5));
       
     } catch (error) {
-      console.error("Error fetching activities:", error);
+      console.error("Error fetching dashboard data:", error);
+      if (!silent) toast.error("Failed to load dashboard data");
+    } finally {
+      if (!silent) setLoading(false);
     }
   };
 
@@ -275,10 +275,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex gap-3">
             <button 
-              onClick={() => {
-                fetchDashboardData(false);
-                fetchRecentActivities();
-              }} 
+              onClick={() => fetchDashboardData(false)} 
               className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md text-white rounded-lg hover:bg-white/20 transition-all"
             >
               <FaChartLine />
