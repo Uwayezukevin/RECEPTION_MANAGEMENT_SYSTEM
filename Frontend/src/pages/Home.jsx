@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { QRCodeSVG } from "qrcode.react";
 import {
   FaClipboardList,
   FaClock,
@@ -27,14 +28,16 @@ import {
   FaDatabase,
   FaShieldVirus,
 } from "react-icons/fa";
-import { MdAdminPanelSettings, MdMeetingRoom, MdReceipt } from "react-icons/md";
-import { MdLocationOn, MdEmail } from "react-icons/md";
+import { MdAdminPanelSettings, MdMeetingRoom } from "react-icons/md";
+import { MdLocationOn } from "react-icons/md";
 import logo from "../assets/image.png";
-import QRCode from "../assets/frame (3).png";
 
 const Home = () => {
   const navigate = useNavigate();
   const { user, loading, isAdmin, isReceptionist } = useAuth();
+
+  // Get the full URL for visitor registration
+  const visitorRegistrationUrl = `${window.location.origin}/visitor-service`;
 
   const handleProtectedNavigation = (path, requiredRole = null) => {
     if (!user) {
@@ -129,17 +132,21 @@ const Home = () => {
               A complete digital solution for visitor management, service requests, and meeting attendance tracking with real-time updates and digital signatures.
             </p>
             
-            {/* QR Code Section - Primary */}
+            {/* QR Code Section - Dynamic QR Code that redirects to /visitor-service */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
               <Link
                 to="/visitor-service"
                 className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 sm:p-4 shadow-lg hover:scale-105 transition-all duration-300"
               >
-                <img
-                  src={QRCode}
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-contain mb-2"
-                  alt="Scan QR code to register"
-                />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 mb-2">
+                  <QRCodeSVG 
+                    value={visitorRegistrationUrl}
+                    size={96}
+                    level="H"
+                    bgColor="transparent"
+                    fgColor="#FFFFFF"
+                  />
+                </div>
                 <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">
                   Scan to continue <br className="hidden sm:block" />
                   as a visitor
@@ -285,7 +292,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* How It Works Section - Updated */}
+      {/* How It Works Section */}
       <div className="bg-white/5 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
@@ -333,108 +340,44 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Features Section - Enhanced */}
+      {/* Technology Stack Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
-            Key Features
+            Technology Stack
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-white/80 px-4">
-            Everything you need for a seamless experience
+            Built with modern technologies for optimal performance
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-            <FaRocket className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Fast Registration</h3>
-              <p className="text-white/70 text-xs sm:text-sm">Quick and easy visitor check-in process</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+          <div className="text-center">
+            <div className="bg-white/10 rounded-xl p-4">
+              <FaLaptopCode className="text-3xl text-yellow-400 mx-auto mb-2" />
+              <p className="text-white font-medium text-sm">React + Vite</p>
+              <p className="text-white/50 text-xs">Frontend</p>
             </div>
           </div>
-
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-            <FaBell className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Real-time Notifications</h3>
-              <p className="text-white/70 text-xs sm:text-sm">Instant updates on request status via WebSocket</p>
+          <div className="text-center">
+            <div className="bg-white/10 rounded-xl p-4">
+              <FaDatabase className="text-3xl text-green-400 mx-auto mb-2" />
+              <p className="text-white font-medium text-sm">Node.js + Express</p>
+              <p className="text-white/50 text-xs">Backend API</p>
             </div>
           </div>
-
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-            <FaFileSignature className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Digital Signatures</h3>
-              <p className="text-white/70 text-xs sm:text-sm">Electronic signature capture for meetings</p>
+          <div className="text-center">
+            <div className="bg-white/10 rounded-xl p-4">
+              <FaShieldVirus className="text-3xl text-blue-400 mx-auto mb-2" />
+              <p className="text-white font-medium text-sm">MongoDB</p>
+              <p className="text-white/50 text-xs">Database</p>
             </div>
           </div>
-
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-            <FaCalendarAlt className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Meeting Management</h3>
-              <p className="text-white/70 text-xs sm:text-sm">Schedule and track meeting attendance</p>
-            </div>
-          </div>
-
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-            <FaQrcode className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">QR Code Access</h3>
-              <p className="text-white/70 text-xs sm:text-sm">Easy sign-in via QR code scanning</p>
-            </div>
-          </div>
-
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-            <FaChartLine className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-            <div>
-              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Export Reports</h3>
-              <p className="text-white/70 text-xs sm:text-sm">PDF, Excel, HTML exports with signatures</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Technology Stack Section */}
-      <div className="bg-white/5 py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
-              Technology Stack
-            </h2>
-            <p className="text-base sm:text-lg md:text-xl text-white/80 px-4">
-              Built with modern technologies for optimal performance
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-            <div className="text-center">
-              <div className="bg-white/10 rounded-xl p-4">
-                <FaLaptopCode className="text-3xl text-yellow-400 mx-auto mb-2" />
-                <p className="text-white font-medium text-sm">React + Vite</p>
-                <p className="text-white/50 text-xs">Frontend</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="bg-white/10 rounded-xl p-4">
-                <FaDatabase className="text-3xl text-green-400 mx-auto mb-2" />
-                <p className="text-white font-medium text-sm">Node.js + Express</p>
-                <p className="text-white/50 text-xs">Backend API</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="bg-white/10 rounded-xl p-4">
-                <FaShieldVirus className="text-3xl text-blue-400 mx-auto mb-2" />
-                <p className="text-white font-medium text-sm">MongoDB</p>
-                <p className="text-white/50 text-xs">Database</p>
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="bg-white/10 rounded-xl p-4">
-                <FaHandshake className="text-3xl text-purple-400 mx-auto mb-2" />
-                <p className="text-white font-medium text-sm">Socket.io</p>
-                <p className="text-white/50 text-xs">Real-time Updates</p>
-              </div>
+          <div className="text-center">
+            <div className="bg-white/10 rounded-xl p-4">
+              <FaHandshake className="text-3xl text-purple-400 mx-auto mb-2" />
+              <p className="text-white font-medium text-sm">Socket.io</p>
+              <p className="text-white/50 text-xs">Real-time Updates</p>
             </div>
           </div>
         </div>
