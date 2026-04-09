@@ -23,7 +23,6 @@ meetingRouter.put('/:id/status', authenticate, authorizeAdmin, meetingController
 
 // Export routes - Only Admin
 meetingRouter.get('/:id/export/pdf', authenticate, authorizeAdmin, meetingController.ExportMeetingToPDF);
-meetingRouter.get('/:id/export/excel', authenticate, authorizeAdmin, meetingController.ExportMeetingToExcel);
 meetingRouter.get('/:id/export/html', authenticate, authorizeAdmin, meetingController.ExportMeetingToHTML);
 meetingRouter.get('/:id/export/csv', authenticate, authorizeAdmin, meetingController.ExportMeetingToCSV);
 
