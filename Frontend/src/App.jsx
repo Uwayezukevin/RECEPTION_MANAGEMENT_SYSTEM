@@ -19,7 +19,6 @@ import MeetingSignInPage from "./pages/MeetingSignInPage";
 
 // Admin Module Imports
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import UsersList from "./pages/admin/UsersList";
 
 import "./index.css";
 
@@ -95,14 +94,6 @@ const App = () => {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <UsersList />
               </ProtectedRoute>
             }
           />

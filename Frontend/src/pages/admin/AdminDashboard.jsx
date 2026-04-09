@@ -148,9 +148,6 @@ const AdminDashboard = () => {
   };
 
   const statCards = [
-    { title: 'Total Users', value: stats.totalUsers, icon: FaUsers, color: 'bg-blue-500', link: '/admin/users', subValue: `${stats.activeUsers} active` },
-    { title: 'Admins', value: stats.totalAdmins, icon: MdAdminPanelSettings, color: 'bg-purple-500', link: '/admin/users', subValue: 'Administrators' },
-    { title: 'Receptionists', value: stats.totalReceptionists, icon: FaUserShield, color: 'bg-green-500', link: '/admin/users', subValue: 'Staff members' },
     { title: 'Meetings', value: stats.totalMeetings, icon: FaCalendarAlt, color: 'bg-yellow-500', link: '/meetings', subValue: `${stats.upcomingMeetings} upcoming` },
     { title: 'Visitors', value: stats.totalVisitors, icon: FaUserCheck, color: 'bg-indigo-500', link: '/visitors-list', subValue: `${stats.todayVisitors} today` },
     { title: 'Requests', value: stats.totalRequests, icon: FaClipboardList, color: 'bg-pink-500', link: '/visitors-list', subValue: `${stats.pendingRequests} pending` },
@@ -188,9 +185,6 @@ const AdminDashboard = () => {
             <button onClick={() => fetchDashboardData(false)} className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md text-white rounded-lg hover:bg-white/20 transition-all">
               <FaChartLine /><span>Refresh</span>
             </button>
-            <Link to="/admin/users" className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md text-white rounded-lg hover:bg-white/20 transition-all">
-              <FaUserPlus /><span>Manage Users</span>
-            </Link>
             <button onClick={handleLogout} className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/20 backdrop-blur-md text-white rounded-lg hover:bg-red-500/30 transition-all">
               <FaSignOutAlt /><span>Logout</span>
             </button>
@@ -223,12 +217,6 @@ const AdminDashboard = () => {
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link to="/admin/users" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all group">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <FaUsers className="text-blue-400 text-xl" />
-                </div>
-                <div><p className="text-white font-medium">Manage Users</p><p className="text-white/60 text-sm">Add or remove staff</p></div>
-              </Link>
               <Link to="/meetings/create" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all group">
                 <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                   <FaCalendarAlt className="text-green-400 text-xl" />
