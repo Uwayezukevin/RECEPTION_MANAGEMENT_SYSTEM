@@ -198,16 +198,6 @@ const MeetingSignInPage = () => {
                 <FaHome />
                 Go to Home
               </button>
-              <button
-                onClick={() => {
-                  setSuccess(null);
-                  navigate('/visitor-service');
-                }}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 transition"
-              >
-                <FaUserCheck />
-                New Registration
-              </button>
             </div>
           </div>
         </div>
