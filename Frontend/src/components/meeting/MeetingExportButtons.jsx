@@ -43,13 +43,6 @@ const MeetingExportButtons = ({ meetingId, meetingTitle }) => {
         📄 PDF
       </button>
       <button
-        onClick={() => exportTo('excel')}
-        style={styles.exportBtn}
-        title="Export as Excel with signatures"
-      >
-        📊 Excel
-      </button>
-      <button
         onClick={() => exportTo('html')}
         style={styles.exportBtn}
         title="Export as HTML with signatures"

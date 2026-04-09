@@ -352,13 +352,6 @@ const Meetings = () => {
                           PDF
                         </button>
                         <button
-                          onClick={() => exportMeeting(meeting._id, "excel")}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition"
-                        >
-                          <FaFileExcel className="text-green-400" />
-                          Excel
-                        </button>
-                        <button
                           onClick={() => exportMeeting(meeting._id, "html")}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-gray-700 rounded transition"
                         >
