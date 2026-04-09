@@ -98,14 +98,6 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <UsersList />
-              </ProtectedRoute>
-            }
-          />
           
           {/* Redirect any unknown routes to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
