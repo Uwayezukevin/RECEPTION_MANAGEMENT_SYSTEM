@@ -11,15 +11,15 @@ const emitDashboardUpdate = async (io) => {
   try {
     const [totalRequests, pendingRequests] = await Promise.all([
       Request.countDocuments(),
-      Request.countDocuments({ status: "pending" })
+      Request.countDocuments({ status: "pending" }),
     ]);
-    
-    io.emit('dashboard-update', {
+
+    io.emit("dashboard-update", {
       stats: { totalRequests, pendingRequests },
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   } catch (error) {
-    console.error('Error emitting dashboard update:', error);
+    console.error("Error emitting dashboard update:", error);
   }
 };
 
@@ -90,14 +90,16 @@ export const CreateRequest = async (req, res) => {
     await savedRequest.populate("visitor");
     await savedRequest.populate("service");
 
-    const staffUsers = await User.find({ role: { $in: ["receptionist", "admin"] } });
+    const staffUsers = await User.find({
+      role: { $in: ["receptionist", "admin"] },
+    });
 
     if (staffUsers.length > 0) {
       const notifications = staffUsers.map((staff) => ({
         recipient: staff._id,
         type: "request_created",
         title: "New Service Request",
-        message: `${visitor.fullName} (${visitor.nationality || 'visitor'}) requested ${serviceExists.name}`,
+        message: `${visitor.fullName} (${visitor.nationality || "visitor"}) requested ${serviceExists.name}`,
         relatedRequest: savedRequest._id,
         relatedVisitor: visitorId,
         metadata: {
@@ -116,7 +118,7 @@ export const CreateRequest = async (req, res) => {
       req.io.emit("new-request", {
         request: savedRequest,
         visitor: visitor,
-        message: `New service request from ${visitor.fullName}`
+        message: `New service request from ${visitor.fullName}`,
       });
       await emitDashboardUpdate(req.io);
     }
@@ -126,7 +128,6 @@ export const CreateRequest = async (req, res) => {
       msg: "Service request submitted successfully!",
       request: savedRequest,
     });
-    
   } catch (err) {
     console.error("Error creating request:", err);
     res.status(500).json({
@@ -269,16 +270,31 @@ export const UpdateRequestStatus = async (req, res) => {
     console.log("Request status updated from", oldStatus, "to", status);
 
     if (request.service && request.service.name) {
-      const staffNotification = new Notification({
-        recipient: req.user.id,
-        type: `request_${status}`,
-        title: `Request ${status.toUpperCase()}`,
-        message: `You ${status} request #${request._id.toString().slice(-6)} for ${request.service.name}`,
-        relatedRequest: request._id,
-        relatedVisitor: request.visitor._id,
-      });
-      await staffNotification.save();
-      console.log("Staff notification created");
+      // Only create notification for valid status types
+      const validNotificationTypes = [
+        "approved",
+        "rejected",
+        "completed",
+        "cancelled",
+      ];
+
+      if (validNotificationTypes.includes(status)) {
+        try {
+          const staffNotification = new Notification({
+            recipient: req.user.id,
+            type: `request_${status}`,
+            title: `Request ${status.toUpperCase()}`,
+            message: `You ${status} request #${request._id.toString().slice(-6)} for ${request.service.name}`,
+            relatedRequest: request._id,
+            relatedVisitor: request.visitor._id,
+          });
+          await staffNotification.save();
+          console.log(`Staff notification created for ${status}`);
+        } catch (notifError) {
+          console.error("Error creating notification:", notifError.message);
+          // Don't fail the whole request if notification fails
+        }
+      }
     }
 
     // ==================== REAL-TIME UPDATES ====================
@@ -297,21 +313,21 @@ export const UpdateRequestStatus = async (req, res) => {
           service: request.service,
           eventDate: request.eventDate,
           visitorName: request.visitor?.fullName,
-          visitorEmail: request.visitor?.email
-        }
+          visitorEmail: request.visitor?.email,
+        },
       };
-      
+
       // Send to visitors tracking this request
       req.io.to(`request_${request._id}`).emit("request-updated", updateData);
       console.log(`📡 Real-time update sent to request_${request._id} room`);
-      
+
       // Also send to staff
       req.io.to(`user_${req.user.id}`).emit("notification", {
         title: `Request ${status.toUpperCase()}`,
         message: `You ${status} request #${request._id.toString().slice(-6)}`,
-        type: `request_${status}`
+        type: `request_${status}`,
       });
-      
+
       // Emit dashboard update
       await emitDashboardUpdate(req.io);
     }
@@ -322,7 +338,6 @@ export const UpdateRequestStatus = async (req, res) => {
       msg: `Request ${status} successfully.`,
       request,
     });
-    
   } catch (err) {
     console.error("Error updating request status:", err);
     res.status(500).json({
