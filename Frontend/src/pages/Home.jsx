@@ -69,7 +69,7 @@ const Home = () => {
                   className="bg-green-500/20 backdrop-blur-md text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:bg-green-500/30 transition-all duration-200 flex items-center space-x-2 text-sm sm:text-base border border-green-500/30"
                 >
                   <FaCalendarAlt className="text-sm" />
-                  <span>Dashboard</span>
+                  <span>Reception</span>
                 </button>
               )}
               {isAdmin() && (

@@ -8,13 +8,16 @@ import router from "./routes/routes.js";
 import meetingRoutes from "./routes/meetingRoutes.js";
 import Notification from "./models/Notification.js";
 import conn from "./config/db.js";
+import Visitor from "./models/Visitor.js";
+import Request from "./models/Request.js";
+import Meeting from "./models/meeting.js";
+import User from "./models/User.js";
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 
-// Configure CORS for Express BEFORE routes
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   "https://reception-management-system-kappa.vercel.app",
@@ -25,10 +28,8 @@ const allowedOrigins = [
   "http://127.0.0.1:5174",
 ];
 
-// Express CORS middleware - this should come before routes
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -42,29 +43,64 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// IMPORTANT: Increase payload limit for signature images (Base64 can be large)
-app.use(express.json({ limit: '10mb' }));  // Increased for signatures
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Socket.io CORS configuration
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST"]
   },
-  // Increase max payload for socket emissions (for signatures)
-  maxHttpBufferSize: 1e8, // 100 MB
+  maxHttpBufferSize: 1e8,
   pingTimeout: 60000,
 });
 
-// Socket.io middleware for authentication (for staff)
+// Socket Service Functions
+const emitDashboardUpdate = async () => {
+  try {
+    const [totalVisitors, todayVisitors, totalRequests, pendingRequests, totalMeetings, upcomingMeetings, users] = await Promise.all([
+      Visitor.countDocuments(),
+      Visitor.countDocuments({
+        checkInTime: { $gte: new Date().setHours(0, 0, 0, 0) }
+      }),
+      Request.countDocuments(),
+      Request.countDocuments({ status: 'pending' }),
+      Meeting.countDocuments(),
+      Meeting.countDocuments({ 
+        status: 'scheduled',
+        meetingDate: { $gte: new Date() }
+      }),
+      User.find()
+    ]);
+
+    const admins = users.filter(u => u.role === 'admin').length;
+    const receptionists = users.filter(u => u.role === 'receptionist').length;
+
+    io.emit('dashboard-update', {
+      stats: {
+        totalVisitors,
+        todayVisitors,
+        totalRequests,
+        pendingRequests,
+        totalMeetings,
+        upcomingMeetings,
+        totalUsers: users.length,
+        totalAdmins: admins,
+        totalReceptionists: receptionists,
+        activeUsers: users.filter(u => u.isActive).length
+      },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    console.error('Error emitting dashboard update:', error);
+  }
+};
+
 io.use(async (socket, next) => {
   const token = socket.handshake.auth.token;
   
-  // If no token, allow connection for visitors (they don't need auth)
   if (!token) {
-    console.log('Socket connection: Visitor connection (no auth)');
     socket.isVisitor = true;
     return next();
   }
@@ -73,60 +109,41 @@ io.use(async (socket, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     socket.userId = decoded.id;
     socket.isStaff = true;
-    console.log('Socket authenticated for staff user:', socket.userId);
     next();
   } catch (err) {
-    console.log('Socket authentication error:', err.message);
-    // Don't reject - allow as visitor
     socket.isVisitor = true;
     next();
   }
 });
 
-// Socket.io connection handling
 io.on("connection", (socket) => {
   console.log("User connected:", socket.userId || "visitor");
 
-  // Join user's personal room (for staff)
   if (socket.userId) {
     socket.join(`user_${socket.userId}`);
-    console.log(`Staff ${socket.userId} joined room user_${socket.userId}`);
+    socket.join('admin_room');
   }
 
-  // Handle joining request room for real-time updates (visitors)
   socket.on("join-request-room", (requestId) => {
     if (requestId) {
       socket.join(`request_${requestId}`);
-      console.log(`Socket joined request room: request_${requestId}`);
-      
-      // Send confirmation back to client
       socket.emit("joined-request-room", { requestId, success: true });
     }
   });
 
-  // Handle joining meeting room for real-time participant updates
   socket.on("join-meeting-room", (meetingId) => {
     if (meetingId) {
       socket.join(`meeting_${meetingId}`);
-      console.log(`Socket joined meeting room: meeting_${meetingId}`);
       socket.emit("joined-meeting-room", { meetingId, success: true });
     }
   });
 
-  // Handle leaving meeting room
-  socket.on("leave-meeting-room", (meetingId) => {
-    if (meetingId) {
-      socket.leave(`meeting_${meetingId}`);
-      console.log(`Socket left meeting room: meeting_${meetingId}`);
-    }
+  socket.on("leave-request-room", (requestId) => {
+    if (requestId) socket.leave(`request_${requestId}`);
   });
 
-  // Handle leaving request room
-  socket.on("leave-request-room", (requestId) => {
-    if (requestId) {
-      socket.leave(`request_${requestId}`);
-      console.log(`Socket left request room: request_${requestId}`);
-    }
+  socket.on("leave-meeting-room", (meetingId) => {
+    if (meetingId) socket.leave(`meeting_${meetingId}`);
   });
 
   socket.on("disconnect", () => {
@@ -134,17 +151,15 @@ io.on("connection", (socket) => {
   });
 });
 
-// Middleware to emit notifications and request updates in real-time
 app.use((req, res, next) => {
   req.io = io;
+  req.emitDashboardUpdate = emitDashboardUpdate;
   next();
 });
 
-// Routes
 app.use("/api", router);
 app.use("/api/meetings", meetingRoutes);
 
-// Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({ 
     status: "OK", 
@@ -153,25 +168,20 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
-  // Handle specific error types
   if (err.type === 'entity.too.large') {
     return res.status(413).json({
       success: false,
-      msg: "Request entity too large. Signature image may be too big. Please try a smaller signature."
+      msg: "Request entity too large. Signature image may be too big."
     });
   }
-  
   res.status(err.status || 500).json({
     success: false,
     msg: err.message || 'Internal server error'
   });
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
   server.close(() => {
@@ -183,13 +193,7 @@ process.on('SIGTERM', () => {
 const PORT = process.env.PORT || 3400;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 API URL: http://localhost:${PORT}/api`);
-  console.log(`🔌 WebSocket URL: ws://localhost:${PORT}`);
-  console.log(`📅 Meeting API URL: http://localhost:${PORT}/api/meetings`);
-  console.log(`✅ CORS enabled for origins:`);
-  allowedOrigins.forEach(origin => console.log(`   - ${origin}`));
-  console.log(`✅ Real-time updates enabled for requests and meetings`);
-  console.log(`✅ Signature support enabled (10MB limit)`);
+  console.log(`✅ Real-time dashboard updates enabled`);
 });
 
 export default app;

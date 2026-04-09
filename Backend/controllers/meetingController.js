@@ -9,6 +9,27 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Helper function to emit dashboard update
+const emitDashboardUpdate = async (io) => {
+  if (!io) return;
+  try {
+    const [totalMeetings, upcomingMeetings] = await Promise.all([
+      Meeting.countDocuments(),
+      Meeting.countDocuments({ 
+        status: 'scheduled',
+        meetingDate: { $gte: new Date() }
+      })
+    ]);
+    
+    io.emit('dashboard-update', {
+      stats: { totalMeetings, upcomingMeetings },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    console.error('Error emitting dashboard update:', error);
+  }
+};
+
 // ==================== CREATE MEETING ====================
 export const CreateMeeting = async (req, res) => {
   try {
@@ -74,11 +95,13 @@ export const CreateMeeting = async (req, res) => {
       console.log(`✅ Created ${notifications.length} notifications for staff`);
     }
 
+    // ==================== REAL-TIME UPDATES ====================
     if (req.io) {
       req.io.emit('meeting-created', {
         meeting: savedMeeting,
         message: `New meeting scheduled: ${savedMeeting.title}`
       });
+      await emitDashboardUpdate(req.io);
     }
 
     res.status(201).json({
@@ -144,6 +167,16 @@ export const AddParticipant = async (req, res) => {
 
     meeting.participants.push(participant);
     await meeting.save();
+
+    // ==================== REAL-TIME UPDATES ====================
+    if (req.io) {
+      req.io.to(`meeting_${meetingId}`).emit('participant-added', {
+        meetingId: meeting._id,
+        participant: participant,
+        totalParticipants: meeting.participants.length
+      });
+      await emitDashboardUpdate(req.io);
+    }
 
     res.status(201).json({
       success: true,
@@ -247,6 +280,15 @@ export const UpdateMeetingStatus = async (req, res) => {
     meeting.status = status;
     if (minutes) meeting.minutes = minutes;
     await meeting.save();
+
+    // ==================== REAL-TIME UPDATES ====================
+    if (req.io) {
+      req.io.emit('meeting-updated', {
+        meeting: meeting,
+        message: `Meeting "${meeting.title}" is now ${status}`
+      });
+      await emitDashboardUpdate(req.io);
+    }
 
     res.json({ success: true, msg: `Meeting status updated to ${status}`, meeting });
 
@@ -385,9 +427,6 @@ export const GetMeetingStats = async (req, res) => {
   }
 };
 
-// ==================== EXPORT TO PDF ====================
-// controllers/meetingController.js - Fixed Export Functions with Signatures
-
 // ==================== EXPORT TO PDF WITH SIGNATURES ====================
 export const ExportMeetingToPDF = async (req, res) => {
   try {
@@ -409,11 +448,9 @@ export const ExportMeetingToPDF = async (req, res) => {
     
     doc.pipe(res);
     
-    // Header
     doc.fontSize(24).font('Helvetica-Bold').text(meeting.title, { align: 'center' });
     doc.moveDown();
     
-    // Meeting Info
     doc.fontSize(12).font('Helvetica');
     doc.text(`Date: ${new Date(meeting.meetingDate).toLocaleDateString()}`);
     doc.text(`Time: ${meeting.startTime} - ${meeting.endTime}`);
@@ -423,7 +460,6 @@ export const ExportMeetingToPDF = async (req, res) => {
     doc.text(`Total Participants: ${meeting.participants.length}`);
     doc.moveDown(2);
     
-    // Participants Table with Signatures
     doc.fontSize(14).font('Helvetica-Bold').text('Participants List', { underline: true });
     doc.moveDown();
     
@@ -432,27 +468,20 @@ export const ExportMeetingToPDF = async (req, res) => {
     for (let i = 0; i < meeting.participants.length; i++) {
       const p = meeting.participants[i];
       
-      // Check if we need a new page
       if (yPos > 700) {
         doc.addPage();
         yPos = 50;
       }
       
-      // Participant border box
       doc.rect(50, yPos - 5, 500, 90).stroke();
-      
-      // Participant number and name
       doc.fontSize(11).font('Helvetica-Bold');
       doc.text(`${i + 1}. ${p.fullName}`, 60, yPos);
-      
-      // Participant details
       doc.fontSize(10).font('Helvetica');
       doc.text(`Institution: ${p.institution}`, 60, yPos + 15);
       doc.text(`Position: ${p.position}`, 60, yPos + 30);
       if (p.email) doc.text(`Email: ${p.email}`, 60, yPos + 45);
       doc.text(`Signed At: ${new Date(p.signedAt).toLocaleString()}`, 60, yPos + 60);
       
-      // Add signature image
       if (p.signature) {
         try {
           let signatureBase64 = p.signature;
@@ -496,7 +525,6 @@ export const ExportMeetingToExcel = async (req, res) => {
 
     const workbook = new ExcelJS.Workbook();
     
-    // Sheet 1: Meeting Information
     const infoSheet = workbook.addWorksheet('Meeting Information');
     infoSheet.getColumn('A').width = 25;
     infoSheet.getColumn('B').width = 50;
@@ -511,12 +539,9 @@ export const ExportMeetingToExcel = async (req, res) => {
     infoSheet.addRow(['Total Participants', meeting.participants.length]);
     infoSheet.addRow(['Generated On', new Date().toLocaleString()]);
     
-    // Style header
     infoSheet.getRow(1).font = { bold: true };
     
-    // Sheet 2: Participants List
     const participantsSheet = workbook.addWorksheet('Participants List');
-    
     participantsSheet.columns = [
       { header: '#', key: 'no', width: 8 },
       { header: 'Full Name', key: 'fullName', width: 25 },
@@ -526,7 +551,6 @@ export const ExportMeetingToExcel = async (req, res) => {
       { header: 'Signed At', key: 'signedAt', width: 20 }
     ];
     
-    // Style header
     participantsSheet.getRow(1).font = { bold: true };
     participantsSheet.getRow(1).fill = {
       type: 'pattern',
@@ -534,7 +558,6 @@ export const ExportMeetingToExcel = async (req, res) => {
       fgColor: { argb: 'FF4CAF50' }
     };
     
-    // Add participant data
     meeting.participants.forEach((p, index) => {
       const row = participantsSheet.addRow({
         no: index + 1,
@@ -547,7 +570,6 @@ export const ExportMeetingToExcel = async (req, res) => {
       row.height = 60;
     });
     
-    // Sheet 3: Signatures Gallery
     const signaturesSheet = workbook.addWorksheet('Signatures Gallery');
     signaturesSheet.columns = [
       { header: '#', key: 'no', width: 10 },
@@ -562,7 +584,6 @@ export const ExportMeetingToExcel = async (req, res) => {
       fgColor: { argb: 'FFFF9800' }
     };
     
-    // Add signatures as images
     for (let i = 0; i < meeting.participants.length; i++) {
       const p = meeting.participants[i];
       const rowNum = i + 2;
@@ -630,166 +651,56 @@ export const ExportMeetingToHTML = async (req, res) => {
       <title>${meeting.title} - Attendance Report</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          font-family: 'Segoe UI', Arial, sans-serif;
-          background: #f5f5f5;
-          padding: 40px;
-        }
-        .container {
-          max-width: 1200px;
-          margin: 0 auto;
-          background: white;
-          border-radius: 12px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          overflow: hidden;
-        }
-        .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          padding: 30px;
-          text-align: center;
-        }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 40px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
         .header h1 { font-size: 28px; margin-bottom: 10px; }
-        .info-section {
-          padding: 20px 30px;
-          background: #f8f9fa;
-          border-bottom: 1px solid #e0e0e0;
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 15px;
-        }
-        .info-card {
-          background: white;
-          padding: 12px;
-          border-radius: 8px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+        .info-section { padding: 20px 30px; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .info-card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .info-card h4 { color: #667eea; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; }
         .info-card p { font-size: 14px; font-weight: 500; }
-        .stats {
-          padding: 15px 30px;
-          background: white;
-          border-bottom: 1px solid #e0e0e0;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .badge {
-          background: #4CAF50;
-          color: white;
-          padding: 5px 12px;
-          border-radius: 20px;
-          font-size: 14px;
-        }
-        .participants {
-          padding: 20px 30px;
-        }
-        .participant-card {
-          border: 1px solid #e0e0e0;
-          border-radius: 8px;
-          padding: 15px;
-          margin-bottom: 15px;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .participant-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 10px;
-          padding-bottom: 8px;
-          border-bottom: 2px solid #f0f0f0;
-        }
+        .stats { padding: 15px 30px; background: white; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+        .badge { background: #4CAF50; color: white; padding: 5px 12px; border-radius: 20px; font-size: 14px; }
+        .participants { padding: 20px 30px; }
+        .participant-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px; page-break-inside: avoid; break-inside: avoid; }
+        .participant-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid #f0f0f0; }
         .participant-name { font-size: 16px; font-weight: bold; color: #333; }
-        .participant-number {
-          background: #667eea;
-          color: white;
-          padding: 2px 10px;
-          border-radius: 20px;
-          font-size: 12px;
-        }
-        .participant-details {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 10px;
-          margin-bottom: 15px;
-        }
+        .participant-number { background: #667eea; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
+        .participant-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 15px; }
         .detail-label { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 3px; }
         .detail-value { font-size: 13px; color: #333; font-weight: 500; }
-        .signature-box {
-          background: #f9f9f9;
-          padding: 12px;
-          border-radius: 6px;
-          margin-top: 10px;
-        }
+        .signature-box { background: #f9f9f9; padding: 12px; border-radius: 6px; margin-top: 10px; }
         .signature-title { font-size: 11px; color: #666; margin-bottom: 8px; font-weight: bold; }
-        .signature-img { 
-          max-width: 250px; 
-          max-height: 60px; 
-          border: 1px solid #ddd; 
-          padding: 8px; 
-          background: white;
-          border-radius: 4px;
-        }
-        .footer {
-          background: #f8f9fa;
-          padding: 15px;
-          text-align: center;
-          color: #666;
-          font-size: 11px;
-          border-top: 1px solid #e0e0e0;
-        }
-        @media print {
-          body { background: white; padding: 0; }
-          .participant-card { break-inside: avoid; page-break-inside: avoid; }
-          .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
+        .signature-img { max-width: 250px; max-height: 60px; border: 1px solid #ddd; padding: 8px; background: white; border-radius: 4px; }
+        .footer { background: #f8f9fa; padding: 15px; text-align: center; color: #666; font-size: 11px; border-top: 1px solid #e0e0e0; }
+        @media print { body { background: white; padding: 0; } .participant-card { break-inside: avoid; } .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
       </style>
     </head>
     <body>
       <div class="container">
-        <div class="header">
-          <h1>${meeting.title}</h1>
-          <p>Meeting Attendance Report with Signatures</p>
-        </div>
-        
+        <div class="header"><h1>${meeting.title}</h1><p>Meeting Attendance Report with Signatures</p></div>
         <div class="info-section">
           <div class="info-card"><h4>📅 Date</h4><p>${new Date(meeting.meetingDate).toLocaleDateString()}</p></div>
           <div class="info-card"><h4>⏰ Time</h4><p>${meeting.startTime} - ${meeting.endTime}</p></div>
           <div class="info-card"><h4>📍 Location</h4><p>${meeting.location}</p></div>
           <div class="info-card"><h4>👨‍💼 Meeting Leader</h4><p>${meeting.meetingLeader.name} (${meeting.meetingLeader.position})</p></div>
         </div>
-        
-        <div class="stats">
-          <h3>📝 Participants List</h3>
-          <div class="badge">Total: ${meeting.participants.length}</div>
-        </div>
-        
+        <div class="stats"><h3>📝 Participants List</h3><div class="badge">Total: ${meeting.participants.length}</div></div>
         <div class="participants">
           ${meeting.participants.map((p, index) => `
             <div class="participant-card">
-              <div class="participant-header">
-                <span class="participant-name">${p.fullName}</span>
-                <span class="participant-number">#${index + 1}</span>
-              </div>
+              <div class="participant-header"><span class="participant-name">${p.fullName}</span><span class="participant-number">#${index + 1}</span></div>
               <div class="participant-details">
                 <div><div class="detail-label">🏢 Institution</div><div class="detail-value">${p.institution}</div></div>
                 <div><div class="detail-label">💼 Position</div><div class="detail-value">${p.position}</div></div>
                 ${p.email ? `<div><div class="detail-label">📧 Email</div><div class="detail-value">${p.email}</div></div>` : ''}
                 <div><div class="detail-label">⏰ Signed At</div><div class="detail-value">${new Date(p.signedAt).toLocaleString()}</div></div>
               </div>
-              <div class="signature-box">
-                <div class="signature-title">✍️ Digital Signature</div>
-                ${p.signature ? `<img src="${p.signature}" class="signature-img" alt="${p.fullName}'s signature" />` : '<p>No signature provided</p>'}
-              </div>
+              <div class="signature-box"><div class="signature-title">✍️ Digital Signature</div>${p.signature ? `<img src="${p.signature}" class="signature-img" alt="${p.fullName}'s signature" />` : '<p>No signature provided</p>'}</div>
             </div>
           `).join('')}
         </div>
-        
-        <div class="footer">
-          <p>Generated on ${new Date().toLocaleString()}</p>
-          <p>Reception Management System - Official Meeting Report</p>
-        </div>
+        <div class="footer"><p>Generated on ${new Date().toLocaleString()}</p><p>Reception Management System - Official Meeting Report</p></div>
       </div>
     </body>
     </html>`;
