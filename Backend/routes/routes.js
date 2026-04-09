@@ -1,4 +1,4 @@
-// routes/routes.js - Updated with Admin support
+// routes/routes.js - Proper Role-Based Access Control
 import express from 'express';
 import { authenticate, authorizeReceptionist, authorizeAdmin } from '../middleware/Auth.js';
 import * as authController from '../controllers/authController.js';
@@ -22,12 +22,18 @@ router.get('/requests/:id', requestController.GetRequestById);
 // ==================== PROTECTED ROUTES (Auth Required) ====================
 router.get('/auth/me', authenticate, authController.GetCurrentUser);
 
-// Admin-only routes (User Management)
+// ==================== ADMIN-ONLY ROUTES (Strictly Admin Only) ====================
+// User Management - ONLY ADMIN
 router.get('/admin/users', authenticate, authorizeAdmin, authController.GetAllUsers);
 router.put('/admin/users/:id/status', authenticate, authorizeAdmin, authController.UpdateUserStatus);
 router.delete('/admin/users/:id', authenticate, authorizeAdmin, authController.DeleteUser);
 
-// Visitor routes (Receptionist or Admin can access)
+// Service Management - ONLY ADMIN (Create, Update, Delete)
+router.post('/services', authenticate, authorizeAdmin, serviceController.CreateService);
+router.put('/services/:id', authenticate, authorizeAdmin, serviceController.UpdateService);
+router.delete('/services/:id', authenticate, authorizeAdmin, serviceController.DeleteService);
+
+// ==================== VISITOR ROUTES (Admin & Receptionist) ====================
 router.get('/visitors', authenticate, authorizeReceptionist, visitorController.GetVisitors);
 router.get('/visitors/stats', authenticate, authorizeReceptionist, visitorController.GetVisitorStats);
 router.get('/visitors/checked-in', authenticate, authorizeReceptionist, visitorController.GetCheckedInVisitors);
@@ -36,18 +42,22 @@ router.get('/visitors/history/:identifier', authenticate, authorizeReceptionist,
 router.get('/visitors/:id', authenticate, authorizeReceptionist, visitorController.GetVisitorById);
 router.put('/visitors/:id/checkout', authenticate, authorizeReceptionist, visitorController.CheckOutVisitor);
 
-// Request routes (Receptionist or Admin can access)
+// ==================== REQUEST ROUTES (Admin & Receptionist) ====================
 router.get('/requests', authenticate, authorizeReceptionist, requestController.GetAllRequests);
 router.get('/requests/dashboard-stats', authenticate, authorizeReceptionist, requestController.GetDashboardStats);
 router.get('/requests/visitor/:visitorId', authenticate, authorizeReceptionist, requestController.GetVisitorRequests);
 router.put('/requests/:id/status', authenticate, authorizeReceptionist, requestController.UpdateRequestStatus);
 
-// Notification routes (Receptionist or Admin can access)
+// ==================== NOTIFICATION ROUTES (Admin & Receptionist) ====================
 router.get('/notifications', authenticate, authorizeReceptionist, notificationController.GetMyNotifications);
 router.get('/notifications/count', authenticate, authorizeReceptionist, notificationController.GetNotificationCount);
 router.put('/notifications/:id/read', authenticate, authorizeReceptionist, notificationController.MarkAsRead);
 router.put('/notifications/read-all', authenticate, authorizeReceptionist, notificationController.MarkAllAsRead);
 router.delete('/notifications/:id', authenticate, authorizeReceptionist, notificationController.DeleteNotification);
 
-router.use('/meeting' , meetingRouter)
+// ==================== MEETING ROUTES (Admin & Receptionist) ====================
+// Receptionists can view meetings and sign in participants
+// Admins have full meeting management access (defined in meetingRoutes)
+router.use('/meetings', meetingRouter);
+
 export default router;
