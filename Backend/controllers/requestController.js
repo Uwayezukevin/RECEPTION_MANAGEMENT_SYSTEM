@@ -1,16 +1,33 @@
-// controllers/requestController.js - No Priority, No Email
+// controllers/requestController.js - No Priority, No Email, with Real-time Updates
 import Request from "../models/Request.js";
 import Notification from "../models/Notification.js";
 import Visitor from "../models/Visitor.js";
 import Service from "../models/Service.js";
 import User from "../models/User.js";
 
+// Helper function to emit dashboard update
+const emitDashboardUpdate = async (io) => {
+  if (!io) return;
+  try {
+    const [totalRequests, pendingRequests] = await Promise.all([
+      Request.countDocuments(),
+      Request.countDocuments({ status: "pending" })
+    ]);
+    
+    io.emit('dashboard-update', {
+      stats: { totalRequests, pendingRequests },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    console.error('Error emitting dashboard update:', error);
+  }
+};
+
 export const CreateRequest = async (req, res) => {
   try {
-    const { service, eventDate, message } = req.body;  // Removed priority
+    const { service, eventDate, message } = req.body;
     const visitorId = req.params.visitorId;
 
-    // Validate required fields
     if (!service) {
       return res.status(400).json({
         success: false,
@@ -25,7 +42,6 @@ export const CreateRequest = async (req, res) => {
       });
     }
 
-    // Check if visitor exists and is checked in
     const visitor = await Visitor.findById(visitorId);
     if (!visitor) {
       return res.status(404).json({
@@ -41,7 +57,6 @@ export const CreateRequest = async (req, res) => {
       });
     }
 
-    // Check if service exists
     const serviceExists = await Service.findById(service);
     if (!serviceExists) {
       return res.status(404).json({
@@ -50,7 +65,6 @@ export const CreateRequest = async (req, res) => {
       });
     }
 
-    // Check for duplicate pending request
     const existingRequest = await Request.findOne({
       visitor: visitorId,
       service: service,
@@ -64,7 +78,6 @@ export const CreateRequest = async (req, res) => {
       });
     }
 
-    // Create request (without priority)
     const newRequest = new Request({
       visitor: visitorId,
       service,
@@ -74,13 +87,10 @@ export const CreateRequest = async (req, res) => {
     });
 
     const savedRequest = await newRequest.save();
-
-    // Populate for response
     await savedRequest.populate("visitor");
     await savedRequest.populate("service");
 
-    // Create notifications for receptionists
-    const staffUsers = await User.find({ role: "receptionist" });
+    const staffUsers = await User.find({ role: { $in: ["receptionist", "admin"] } });
 
     if (staffUsers.length > 0) {
       const notifications = staffUsers.map((staff) => ({
@@ -101,7 +111,16 @@ export const CreateRequest = async (req, res) => {
       console.log(`✅ Created ${notifications.length} notifications for staff`);
     }
 
-    // Return success immediately
+    // ==================== REAL-TIME UPDATES ====================
+    if (req.io) {
+      req.io.emit("new-request", {
+        request: savedRequest,
+        visitor: visitor,
+        message: `New service request from ${visitor.fullName}`
+      });
+      await emitDashboardUpdate(req.io);
+    }
+
     res.status(201).json({
       success: true,
       msg: "Service request submitted successfully!",
@@ -120,7 +139,7 @@ export const CreateRequest = async (req, res) => {
 
 export const GetAllRequests = async (req, res) => {
   try {
-    const { status, startDate, endDate, visitorId } = req.query;  // Removed priority
+    const { status, startDate, endDate, visitorId } = req.query;
     let filter = {};
 
     if (status && status !== "all") filter.status = status;
@@ -197,7 +216,6 @@ export const UpdateRequestStatus = async (req, res) => {
       });
     }
 
-    // Valid status values
     const validStatuses = [
       "pending",
       "approved",
@@ -230,14 +248,11 @@ export const UpdateRequestStatus = async (req, res) => {
       request.status,
     );
 
-    // Store old status for comparison
     const oldStatus = request.status;
 
-    // Update status
     request.status = status;
     if (notes) request.notes = notes;
 
-    // Handle timestamps based on status
     if (status === "approved") {
       request.approvedBy = req.user.id;
       request.approvedAt = new Date();
@@ -253,7 +268,6 @@ export const UpdateRequestStatus = async (req, res) => {
     await request.save();
     console.log("Request status updated from", oldStatus, "to", status);
 
-    // Create notification for staff who updated (only if service exists)
     if (request.service && request.service.name) {
       const staffNotification = new Notification({
         recipient: req.user.id,
@@ -267,7 +281,7 @@ export const UpdateRequestStatus = async (req, res) => {
       console.log("Staff notification created");
     }
 
-    // ==================== REAL-TIME UPDATE ====================
+    // ==================== REAL-TIME UPDATES ====================
     if (req.io) {
       const updateData = {
         requestId: request._id,
@@ -297,10 +311,12 @@ export const UpdateRequestStatus = async (req, res) => {
         message: `You ${status} request #${request._id.toString().slice(-6)}`,
         type: `request_${status}`
       });
+      
+      // Emit dashboard update
+      await emitDashboardUpdate(req.io);
     }
     // ==================== END REAL-TIME UPDATE ====================
 
-    // Return success immediately
     res.json({
       success: true,
       msg: `Request ${status} successfully.`,

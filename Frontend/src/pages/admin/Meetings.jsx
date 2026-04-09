@@ -144,13 +144,6 @@ const Meetings = () => {
   const getSignInLink = (meetingId) => {
     return `${window.location.origin}/meeting/signin/${meetingId}`;
   };
-
-  const copySignInLink = (meetingId, meetingTitle) => {
-    const link = getSignInLink(meetingId);
-    navigator.clipboard.writeText(link);
-    toast.success(`Sign-in link for "${meetingTitle}" copied!`);
-  };
-
   const getStatusBadge = (status) => {
     const badges = {
       scheduled: {
@@ -681,15 +674,6 @@ const Meetings = () => {
                 {participants.length !== 1 ? "s" : ""}
               </div>
               <div className="flex gap-3">
-                <button
-                  onClick={() =>
-                    copySignInLink(selectedMeeting._id, selectedMeeting.title)
-                  }
-                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center gap-2 text-sm"
-                >
-                  <FaLink size={14} />
-                  Copy Sign-in Link
-                </button>
                 <button
                   onClick={() => setShowParticipants(false)}
                   className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition text-sm"

@@ -1,9 +1,31 @@
-// controllers/visitorController.js - With Combined Visitor + Request Creation
+// controllers/visitorController.js - With Combined Visitor + Request Creation & Real-time Updates
 import Visitor from '../models/Visitor.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import Request from '../models/Request.js';
 import Service from '../models/Service.js';
+
+// Helper function to emit dashboard update
+const emitDashboardUpdate = async (io) => {
+  if (!io) return;
+  try {
+    const [totalVisitors, todayVisitors, totalRequests, pendingRequests] = await Promise.all([
+      Visitor.countDocuments(),
+      Visitor.countDocuments({
+        checkInTime: { $gte: new Date().setHours(0, 0, 0, 0) }
+      }),
+      Request.countDocuments(),
+      Request.countDocuments({ status: 'pending' })
+    ]);
+    
+    io.emit('dashboard-update', {
+      stats: { totalVisitors, todayVisitors, totalRequests, pendingRequests },
+      timestamp: new Date()
+    });
+  } catch (error) {
+    console.error('Error emitting dashboard update:', error);
+  }
+};
 
 // ==================== COMBINED: CREATE VISITOR WITH SERVICE REQUEST ====================
 export const CreateVisitorWithRequest = async (req, res) => {
@@ -30,8 +52,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
     });
 
     // ==================== VALIDATION ====================
-    
-    // Validate nationality
     if (!nationality || !['rwandan', 'foreigner'].includes(nationality)) {
       return res.status(400).json({ 
         success: false,
@@ -39,7 +59,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
       });
     }
 
-    // Validate email
     if (!email) {
       return res.status(400).json({ 
         success: false,
@@ -55,7 +74,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
       });
     }
 
-    // Validate full name
     if (!fullName) {
       return res.status(400).json({
         success: false,
@@ -63,7 +81,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
       });
     }
 
-    // Validate service request fields
     if (!service) {
       return res.status(400).json({
         success: false,
@@ -88,7 +105,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
     };
 
     if (nationality === 'rwandan') {
-      // Rwandan must have phone number
       if (!phoneNumber) {
         return res.status(400).json({
           success: false,
@@ -97,9 +113,7 @@ export const CreateVisitorWithRequest = async (req, res) => {
       }
       visitorData.contactType = 'Phone';
       visitorData.contactValue = phoneNumber.trim();
-      
     } else {
-      // Foreigner - either passport or phone number
       if (passportNumber) {
         visitorData.contactType = 'Passport';
         visitorData.contactValue = passportNumber.trim();
@@ -132,7 +146,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
     console.log("Visitor saved:", savedVisitor);
 
     // ==================== CREATE SERVICE REQUEST ====================
-    // Check if service exists
     const serviceExists = await Service.findById(service);
     
     if (!serviceExists) {
@@ -143,7 +156,6 @@ export const CreateVisitorWithRequest = async (req, res) => {
       });
     }
 
-    // Create request (without priority)
     const newRequest = new Request({
       visitor: savedVisitor._id,
       service,
@@ -158,7 +170,7 @@ export const CreateVisitorWithRequest = async (req, res) => {
     console.log("Service request saved:", savedRequest);
 
     // ==================== CREATE NOTIFICATIONS ====================
-    const staffUsers = await User.find({ role: "receptionist" });
+    const staffUsers = await User.find({ role: { $in: ['receptionist', 'admin'] } });
 
     if (staffUsers.length > 0) {
       const notifications = staffUsers.map((staff) => ({
@@ -180,12 +192,23 @@ export const CreateVisitorWithRequest = async (req, res) => {
       console.log(`✅ Created ${notifications.length} notifications for staff`);
     }
 
-    // ==================== REAL-TIME UPDATE ====================
+    // ==================== REAL-TIME UPDATES ====================
     if (req.io) {
+      // Emit new request event
       req.io.emit("new-request", {
         request: savedRequest,
-        visitor: savedVisitor
+        visitor: savedVisitor,
+        message: `New service request from ${savedVisitor.fullName}`
       });
+      
+      // Emit visitor check-in event
+      req.io.emit("visitor-checked-in", {
+        visitor: savedVisitor,
+        message: `New visitor: ${savedVisitor.fullName} checked in`
+      });
+      
+      // Emit dashboard update
+      await emitDashboardUpdate(req.io);
     }
 
     // ==================== RESPONSE ====================
@@ -233,7 +256,6 @@ export const CreateVisitor = async (req, res) => {
       passportNumber 
     });
 
-    // Validate required fields based on nationality
     if (!nationality) {
       return res.status(400).json({ 
         success: false,
@@ -248,7 +270,6 @@ export const CreateVisitor = async (req, res) => {
       });
     }
 
-    // Validate email format
     const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
@@ -265,7 +286,6 @@ export const CreateVisitor = async (req, res) => {
     };
 
     if (nationality === 'rwandan') {
-      // Rwandan validation
       if (!contactValue) {
         return res.status(400).json({
           success: false,
@@ -285,7 +305,6 @@ export const CreateVisitor = async (req, res) => {
       visitorData.contactValue = contactValue.trim();
       
     } else {
-      // Foreigner validation
       if (!fullName) {
         return res.status(400).json({
           success: false,
@@ -295,7 +314,6 @@ export const CreateVisitor = async (req, res) => {
       
       visitorData.fullName = fullName.trim();
       
-      // Handle contact (either phone or passport)
       if (passportNumber) {
         visitorData.contactType = 'Passport';
         visitorData.contactValue = passportNumber.trim();
@@ -311,7 +329,6 @@ export const CreateVisitor = async (req, res) => {
       }
     }
 
-    // Check how many times this visitor has visited before
     const previousVisits = await Visitor.countDocuments({
       $or: [
         { email: visitorData.email },
@@ -322,13 +339,11 @@ export const CreateVisitor = async (req, res) => {
     visitorData.visitNumber = previousVisits + 1;
     visitorData.previousVisits = previousVisits;
 
-    // Create new visitor record
     const newVisitor = new Visitor(visitorData);
     const savedVisitor = await newVisitor.save();
     console.log("Visitor saved:", savedVisitor);
 
-    // Create notification for all receptionists
-    const receptionists = await User.find({ role: 'receptionist' });
+    const receptionists = await User.find({ role: { $in: ['receptionist', 'admin'] } });
     
     if (receptionists.length > 0) {
       const visitMessage = previousVisits === 0 
@@ -355,6 +370,15 @@ export const CreateVisitor = async (req, res) => {
       console.log(`Created ${notifications.length} notifications`);
     }
 
+    // Real-time updates
+    if (req.io) {
+      req.io.emit("visitor-checked-in", {
+        visitor: savedVisitor,
+        message: `New visitor: ${savedVisitor.fullName} checked in`
+      });
+      await emitDashboardUpdate(req.io);
+    }
+
     const welcomeMessage = previousVisits === 0
       ? `Welcome! Your registration is complete. You can now request services.`
       : `Welcome back! This is your ${previousVisits + 1}th visit. You can now request services.`;
@@ -373,6 +397,67 @@ export const CreateVisitor = async (req, res) => {
     res.status(500).json({ 
       success: false,
       name: err.name,
+      msg: err.message 
+    });
+  }
+};
+
+// ==================== CHECK OUT VISITOR ====================
+export const CheckOutVisitor = async (req, res) => {
+  try {
+    const visitor = await Visitor.findById(req.params.id);
+
+    if (!visitor) {
+      return res.status(404).json({ 
+        success: false,
+        msg: "Visitor record not found" 
+      });
+    }
+
+    if (visitor.status === 'checked-out') {
+      return res.status(400).json({ 
+        success: false,
+        msg: "This visitor is already checked out" 
+      });
+    }
+
+    visitor.checkOutTime = new Date();
+    visitor.status = 'checked-out';
+    await visitor.save();
+
+    const receptionists = await User.find({ role: { $in: ['receptionist', 'admin'] } });
+    
+    if (receptionists.length > 0) {
+      const notifications = receptionists.map(staff => ({
+        recipient: staff._id,
+        type: 'check_out',
+        title: 'Visitor Checked Out',
+        message: `${visitor.fullName} (Visit #${visitor.visitNumber}) has checked out at ${new Date().toLocaleTimeString()}`,
+        relatedVisitor: visitor._id,
+        metadata: {
+          visitorId: visitor._id,
+          checkOutTime: visitor.checkOutTime,
+          visitNumber: visitor.visitNumber
+        }
+      }));
+      
+      await Notification.insertMany(notifications);
+    }
+
+    // Real-time updates
+    if (req.io) {
+      await emitDashboardUpdate(req.io);
+    }
+
+    res.json({
+      success: true,
+      msg: "Visitor checked out successfully",
+      visitor
+    });
+  } catch (err) {
+    console.error("Error checking out visitor:", err);
+    res.status(500).json({ 
+      success: false,
       msg: err.message 
     });
   }
@@ -447,61 +532,6 @@ export const GetVisitorById = async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching visitor:", err);
-    res.status(500).json({ 
-      success: false,
-      msg: err.message 
-    });
-  }
-};
-
-export const CheckOutVisitor = async (req, res) => {
-  try {
-    const visitor = await Visitor.findById(req.params.id);
-
-    if (!visitor) {
-      return res.status(404).json({ 
-        success: false,
-        msg: "Visitor record not found" 
-      });
-    }
-
-    if (visitor.status === 'checked-out') {
-      return res.status(400).json({ 
-        success: false,
-        msg: "This visitor is already checked out" 
-      });
-    }
-
-    visitor.checkOutTime = new Date();
-    visitor.status = 'checked-out';
-    await visitor.save();
-
-    const receptionists = await User.find({ role: 'receptionist' });
-    
-    if (receptionists.length > 0) {
-      const notifications = receptionists.map(staff => ({
-        recipient: staff._id,
-        type: 'check_out',
-        title: 'Visitor Checked Out',
-        message: `${visitor.fullName} (Visit #${visitor.visitNumber}) has checked out at ${new Date().toLocaleTimeString()}`,
-        relatedVisitor: visitor._id,
-        metadata: {
-          visitorId: visitor._id,
-          checkOutTime: visitor.checkOutTime,
-          visitNumber: visitor.visitNumber
-        }
-      }));
-      
-      await Notification.insertMany(notifications);
-    }
-
-    res.json({
-      success: true,
-      msg: "Visitor checked out successfully",
-      visitor
-    });
-  } catch (err) {
-    console.error("Error checking out visitor:", err);
     res.status(500).json({ 
       success: false,
       msg: err.message 
