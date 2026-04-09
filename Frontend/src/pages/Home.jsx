@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Fixed with QR Code as primary
+// src/pages/Home.jsx - Complete Project Description with Visitor & Meeting Modules
 import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,8 +19,15 @@ import {
   FaSignInAlt,
   FaCalendarAlt,
   FaSpinner,
+  FaUsers,
+  FaFileSignature,
+  FaQrcode,
+  FaHandshake,
+  FaLaptopCode,
+  FaDatabase,
+  FaShieldVirus,
 } from "react-icons/fa";
-import { MdAdminPanelSettings } from "react-icons/md";
+import { MdAdminPanelSettings, MdMeetingRoom, MdReceipt } from "react-icons/md";
 import { MdLocationOn, MdEmail } from "react-icons/md";
 import logo from "../assets/image.png";
 import QRCode from "../assets/frame (3).png";
@@ -119,8 +126,7 @@ const Home = () => {
               </span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl mx-auto mb-6 sm:mb-8 px-4">
-              Streamline your visitor registration and service requests. Fast,
-              efficient, and completely digital.
+              A complete digital solution for visitor management, service requests, and meeting attendance tracking with real-time updates and digital signatures.
             </p>
             
             {/* QR Code Section - Primary */}
@@ -158,7 +164,7 @@ const Home = () => {
       {/* Stats Section */}
       <div className="bg-white/5 backdrop-blur-sm py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 sm:gap-8">
             <div className="text-center">
               <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
                 100%
@@ -177,208 +183,259 @@ const Home = () => {
             </div>
             <div className="text-center">
               <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
-                Email
+                Digital
               </div>
               <p className="text-white/80 text-sm sm:text-base">
-                Notifications
+                Signatures
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                24/7
+              </div>
+              <p className="text-white/80 text-sm sm:text-base">
+                Access
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* How It Works Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+      {/* Two Main Modules Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
-            How It Works
+            Our Core Modules
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-white/80 px-4">
-            Simple, fast, and convenient process for all visitors
+            Complete solutions for visitor management and meeting tracking
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 text-center hover:transform hover:scale-105 transition-all duration-300">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <img src={QRCode} className="w-8 h-8 sm:w-10 sm:h-10 object-contain" alt="QR" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          {/* Visitor Module Card */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-white/20 hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                <FaUserCheck className="text-green-400 text-2xl" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Visitor Management</h3>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
-              1. Scan QR Code
-            </h3>
-            <p className="text-white/80 text-sm sm:text-base">
-              Scan the QR code at the reception to start your registration
+            <p className="text-white/70 text-sm mb-4">
+              Complete digital visitor registration and service request system
             </p>
+            <ul className="space-y-2 text-white/80 text-sm">
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>QR Code based visitor registration</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Service request submission and tracking</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Real-time status updates via WebSocket</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Email notifications for request updates</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Visitor history and analytics</span>
+              </li>
+            </ul>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 text-center hover:transform hover:scale-105 transition-all duration-300">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <FaClipboardList className="text-white text-xl sm:text-2xl" />
+          {/* Meeting Module Card */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 border border-white/20 hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <MdMeetingRoom className="text-purple-400 text-2xl" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Meeting Management</h3>
             </div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
-              2. Fill Details
-            </h3>
-            <p className="text-white/80 text-sm sm:text-base">
-              Fill in your details and select the service you need
+            <p className="text-white/70 text-sm mb-4">
+              Digital meeting attendance tracking with electronic signatures
             </p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 text-center hover:transform hover:scale-105 transition-all duration-300 sm:col-span-2 lg:col-span-1">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <FaEnvelope className="text-white text-xl sm:text-2xl" />
-            </div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
-              3. Get Updates
-            </h3>
-            <p className="text-white/80 text-sm sm:text-base">
-              Receive email notifications and check status anytime
-            </p>
+            <ul className="space-y-2 text-white/80 text-sm">
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Schedule and manage company meetings</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Digital signature capture for attendance</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>QR code based participant sign-in</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Export reports (PDF, Excel, HTML) with signatures</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400 text-xs" />
+                <span>Real-time participant tracking</span>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="bg-white/5 py-12 sm:py-16 lg:py-20">
+      {/* How It Works Section - Updated */}
+      <div className="bg-white/5 py-12 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
-              Key Features
+              How It Works
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-white/80 px-4">
-              Everything you need for a seamless experience
+              Simple, fast, and convenient process for all users
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-              <FaRocket className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
-                  Fast Registration
-                </h3>
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Quick and easy visitor check-in process
-                </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center hover:transform hover:scale-105 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaQrcode className="text-white text-xl" />
               </div>
+              <h3 className="text-lg font-bold text-white mb-2">1. Scan QR Code</h3>
+              <p className="text-white/70 text-sm">Scan QR code at reception to start registration</p>
             </div>
 
-            <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-              <FaBell className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
-                  Real-time Notifications
-                </h3>
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Get instant updates on your request status
-                </p>
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center hover:transform hover:scale-105 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaClipboardList className="text-white text-xl" />
               </div>
+              <h3 className="text-lg font-bold text-white mb-2">2. Fill Details</h3>
+              <p className="text-white/70 text-sm">Complete registration and select services</p>
             </div>
 
-            <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-              <FaCheckCircle className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
-                  Status Tracking
-                </h3>
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Track your request progress anytime
-                </p>
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center hover:transform hover:scale-105 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaFileSignature className="text-white text-xl" />
               </div>
+              <h3 className="text-lg font-bold text-white mb-2">3. Digital Signature</h3>
+              <p className="text-white/70 text-sm">Sign digitally for meeting attendance</p>
             </div>
 
-            <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-              <FaEnvelope className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
-                  Email Updates
-                </h3>
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Receive confirmation and status emails
-                </p>
+            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 text-center hover:transform hover:scale-105 transition-all duration-300">
+              <div className="w-14 h-14 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaEnvelope className="text-white text-xl" />
               </div>
-            </div>
-
-            <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-              <FaClock className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
-                  24/7 Access
-                </h3>
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Check your request status anytime
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
-              <FaChartLine className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="font-semibold text-white mb-1 sm:mb-2 text-sm sm:text-base">
-                  Service Analytics
-                </h3>
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Track service request trends
-                </p>
-              </div>
+              <h3 className="text-lg font-bold text-white mb-2">4. Get Updates</h3>
+              <p className="text-white/70 text-sm">Receive real-time status notifications</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Services Overview */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
+      {/* Features Section - Enhanced */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
-            Available Services
+            Key Features
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-white/80 px-4">
-            Choose from a variety of services
+            Everything you need for a seamless experience
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 border border-white/20">
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-3">
-              Government Services
-            </h3>
-            <ul className="space-y-2 text-white/80">
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>Rwanda Law Reform Commission</span>
-              </li>
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>Prime Minister Head Office</span>
-              </li>
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>MININFRA</span>
-              </li>
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>MINIJUST</span>
-              </li>
-            </ul>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
+            <FaRocket className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Fast Registration</h3>
+              <p className="text-white/70 text-xs sm:text-sm">Quick and easy visitor check-in process</p>
+            </div>
           </div>
 
-          <div className="bg-white/10 rounded-xl p-4 sm:p-6 border border-white/20">
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-3">
-              Additional Services
-            </h3>
-            <ul className="space-y-2 text-white/80">
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>Document Processing</span>
-              </li>
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>Information Requests</span>
-              </li>
-              <li className="flex items-center space-x-2 text-sm sm:text-base">
-                <FaCheckCircle className="text-green-400 text-xs sm:text-sm flex-shrink-0" />
-                <span>Consultation Services</span>
-              </li>
-            </ul>
+          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
+            <FaBell className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Real-time Notifications</h3>
+              <p className="text-white/70 text-xs sm:text-sm">Instant updates on request status via WebSocket</p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
+            <FaFileSignature className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Digital Signatures</h3>
+              <p className="text-white/70 text-xs sm:text-sm">Electronic signature capture for meetings</p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
+            <FaCalendarAlt className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Meeting Management</h3>
+              <p className="text-white/70 text-xs sm:text-sm">Schedule and track meeting attendance</p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
+            <FaQrcode className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">QR Code Access</h3>
+              <p className="text-white/70 text-xs sm:text-sm">Easy sign-in via QR code scanning</p>
+            </div>
+          </div>
+
+          <div className="bg-white/10 rounded-xl p-4 sm:p-6 flex items-start space-x-3 sm:space-x-4">
+            <FaChartLine className="text-primary-400 text-xl sm:text-2xl mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-white mb-1 text-sm sm:text-base">Export Reports</h3>
+              <p className="text-white/70 text-xs sm:text-sm">PDF, Excel, HTML exports with signatures</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Technology Stack Section */}
+      <div className="bg-white/5 py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 sm:mb-4">
+              Technology Stack
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-white/80 px-4">
+              Built with modern technologies for optimal performance
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+            <div className="text-center">
+              <div className="bg-white/10 rounded-xl p-4">
+                <FaLaptopCode className="text-3xl text-yellow-400 mx-auto mb-2" />
+                <p className="text-white font-medium text-sm">React + Vite</p>
+                <p className="text-white/50 text-xs">Frontend</p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="bg-white/10 rounded-xl p-4">
+                <FaDatabase className="text-3xl text-green-400 mx-auto mb-2" />
+                <p className="text-white font-medium text-sm">Node.js + Express</p>
+                <p className="text-white/50 text-xs">Backend API</p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="bg-white/10 rounded-xl p-4">
+                <FaShieldVirus className="text-3xl text-blue-400 mx-auto mb-2" />
+                <p className="text-white font-medium text-sm">MongoDB</p>
+                <p className="text-white/50 text-xs">Database</p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="bg-white/10 rounded-xl p-4">
+                <FaHandshake className="text-3xl text-purple-400 mx-auto mb-2" />
+                <p className="text-white font-medium text-sm">Socket.io</p>
+                <p className="text-white/50 text-xs">Real-time Updates</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -390,7 +447,7 @@ const Home = () => {
             <div className="flex items-center space-x-2">
               <FaIdCard className="text-white text-lg sm:text-xl" />
               <span className="text-white font-semibold text-sm sm:text-base">
-                Reception System
+                MININFRA Reception System
               </span>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-white/70 text-xs sm:text-sm">
