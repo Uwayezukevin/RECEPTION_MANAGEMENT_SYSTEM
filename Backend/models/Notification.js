@@ -10,13 +10,21 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: [
-      'check_in',           // Visitor checked in
-      'check_out',          // Visitor checked out
-      'request_created',    // New service request
-      'request_updated',    // Request status changed
-      'meeting_created',    // New meeting scheduled (ADD THIS)
-      'meeting_updated',    // Meeting status changed (ADD THIS)
-      'system_notification' // General system notification
+      // Visitor related
+      'check_in',
+      'check_out',
+      'request_created',
+      'request_updated',
+      // Request status updates 
+      'request_approved',
+      'request_rejected', 
+      'request_completed',
+      'request_cancelled',
+      // Meeting related
+      'meeting_created',
+      'meeting_updated',
+      // System
+      'system_notification'
     ],
     required: true
   },
@@ -31,6 +39,9 @@ const notificationSchema = new mongoose.Schema({
   isRead: {
     type: Boolean,
     default: false
+  },
+  readAt: {
+    type: Date
   },
   relatedRequest: {
     type: mongoose.Schema.Types.ObjectId,
@@ -52,7 +63,6 @@ const notificationSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for faster queries
 notificationSchema.index({ recipient: 1, createdAt: -1 });
 notificationSchema.index({ isRead: 1 });
 notificationSchema.index({ type: 1 });
