@@ -1,7 +1,7 @@
 // src/pages/MeetingSignInPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle, FaCheckCircle, FaHome } from 'react-icons/fa';
+import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle, FaCheckCircle, FaHome, FaQrcode } from 'react-icons/fa';
 import SignaturePad from '../components/meeting/SignaturePad';
 import API from '../service/api';
 import toast from 'react-hot-toast';
@@ -90,14 +90,16 @@ const MeetingSignInPage = () => {
       });
       
       if (response.data.success) {
-        // Store success data
         setSuccess({
           name: formData.fullName,
           institution: formData.institution,
           position: formData.position,
+          email: formData.email,
           meetingTitle: meeting.title,
           meetingDate: meeting.meetingDate,
-          meetingLocation: meeting.location
+          meetingLocation: meeting.location,
+          meetingStartTime: meeting.startTime,
+          meetingEndTime: meeting.endTime
         });
         
         toast.success(response.data.msg || 'Successfully signed in!');
@@ -109,13 +111,6 @@ const MeetingSignInPage = () => {
     }
   };
 
-  const handleReset = () => {
-    setSuccess(null);
-    setFormData({ fullName: '', institution: '', position: '', email: '' });
-    setSignature(null);
-    setSubmitting(false);
-  };
-
   // Success Page Component
   if (success) {
     return (
@@ -123,7 +118,7 @@ const MeetingSignInPage = () => {
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
           {/* Success Header */}
           <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-8 text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
               <FaCheckCircle className="text-white text-4xl" />
             </div>
             <h2 className="text-2xl font-bold text-white">Successfully Signed In!</h2>
@@ -137,7 +132,7 @@ const MeetingSignInPage = () => {
                 <FaUserCheck className="text-green-600 text-2xl" />
               </div>
               <h3 className="text-xl font-semibold text-gray-800">Welcome, {success.name}!</h3>
-              <p className="text-gray-500 text-sm mt-1">You have successfully signed in to the meeting</p>
+              <p className="text-gray-500 text-sm mt-1">You have successfully participated in the meeting</p>
             </div>
             
             {/* Meeting Details */}
@@ -156,6 +151,10 @@ const MeetingSignInPage = () => {
                   <span className="font-medium text-gray-700">{new Date(success.meetingDate).toLocaleDateString()}</span>
                 </p>
                 <p className="flex justify-between">
+                  <span className="text-gray-500">Time:</span>
+                  <span className="font-medium text-gray-700">{success.meetingStartTime} - {success.meetingEndTime}</span>
+                </p>
+                <p className="flex justify-between">
                   <span className="text-gray-500">Location:</span>
                   <span className="font-medium text-gray-700">{success.meetingLocation}</span>
                 </p>
@@ -167,6 +166,12 @@ const MeetingSignInPage = () => {
                   <span className="text-gray-500">Position:</span>
                   <span className="font-medium text-gray-700">{success.position}</span>
                 </p>
+                {success.email && (
+                  <p className="flex justify-between">
+                    <span className="text-gray-500">Email:</span>
+                    <span className="font-medium text-gray-700">{success.email}</span>
+                  </p>
+                )}
               </div>
             </div>
             
@@ -193,20 +198,10 @@ const MeetingSignInPage = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => navigate('/')}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 transition"
               >
                 <FaHome />
                 Go to Home
-              </button>
-              <button
-                onClick={() => {
-                  setSuccess(null);
-                  navigate('/visitor-service');
-                }}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 transition"
-              >
-                <FaUserCheck />
-                New Registration
               </button>
             </div>
           </div>
@@ -291,7 +286,7 @@ const MeetingSignInPage = () => {
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <FaUserCheck />
+              <FaSignature />
               Meeting Sign-In
             </h2>
             <p className="text-white/80 text-sm">Please fill in your details and sign below</p>
@@ -309,7 +304,7 @@ const MeetingSignInPage = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                   placeholder="Enter your full name"
                   required
                 />
@@ -327,7 +322,7 @@ const MeetingSignInPage = () => {
                   name="institution"
                   value={formData.institution}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                   placeholder="Your department or institution"
                   required
                 />
@@ -343,7 +338,7 @@ const MeetingSignInPage = () => {
                 name="position"
                 value={formData.position}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                 placeholder="Your job position"
                 required
               />
@@ -360,7 +355,7 @@ const MeetingSignInPage = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition"
                   placeholder="your@email.com"
                 />
               </div>
@@ -381,7 +376,7 @@ const MeetingSignInPage = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>
@@ -398,7 +393,7 @@ const MeetingSignInPage = () => {
           </form>
         </div>
 
-        <p className="text-center text-white/60 text-xs mt-6">
+        <p className="text-center text-white/50 text-xs mt-6">
           Your signature confirms your attendance at this meeting
         </p>
       </div>

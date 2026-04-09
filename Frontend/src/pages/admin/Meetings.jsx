@@ -15,11 +15,8 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaPlayCircle,
-  FaLink,
   FaQrcode,
-  FaCopy,
   FaFilePdf,
-  FaFileExcel,
   FaFileCode,
 } from "react-icons/fa";
 import { QRCodeSVG } from "qrcode.react";
@@ -105,10 +102,6 @@ const Meetings = () => {
           response = await API.exportMeetingToPDF(meetingId);
           filename = `meeting_export_${Date.now()}.pdf`;
           break;
-        case "excel":
-          response = await API.exportMeetingToExcel(meetingId);
-          filename = `meeting_export_${Date.now()}.xlsx`;
-          break;
         case "html":
           response = await API.exportMeetingToHTML(meetingId);
           filename = `meeting_export_${Date.now()}.html`;
@@ -144,6 +137,7 @@ const Meetings = () => {
   const getSignInLink = (meetingId) => {
     return `${window.location.origin}/meeting/signin/${meetingId}`;
   };
+
   const getStatusBadge = (status) => {
     const badges = {
       scheduled: {
@@ -235,7 +229,7 @@ const Meetings = () => {
               >
                 {status}
               </button>
-            ),
+            )
           )}
         </div>
 
@@ -323,15 +317,7 @@ const Meetings = () => {
                     <FaQrcode />
                   </button>
 
-                  <button
-                    onClick={() => copySignInLink(meeting._id, meeting.title)}
-                    className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-purple-500/20 text-purple-200 rounded-lg hover:bg-purple-500/30 transition-all text-sm"
-                    title="Copy link"
-                  >
-                    <FaLink />
-                  </button>
-
-                  {/* Export Dropdown - Fixed Version */}
+                  {/* Export Dropdown */}
                   <div className="relative">
                     <button
                       onClick={(e) => toggleExportMenu(meeting._id, e)}
@@ -412,13 +398,6 @@ const Meetings = () => {
               className="mx-auto mb-4"
             />
             <button
-              onClick={() => copySignInLink(showQRCode._id, showQRCode.title)}
-              className="mt-2 w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center justify-center gap-2"
-            >
-              <FaCopy />
-              Copy Link
-            </button>
-            <button
               onClick={() => setShowQRCode(null)}
               className="mt-2 w-full px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
             >
@@ -428,7 +407,7 @@ const Meetings = () => {
         </div>
       )}
 
-      {/* Participants Modal - IMPROVED SCROLLABLE VERSION */}
+      {/* Participants Modal */}
       {showParticipants && selectedMeeting && (
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -567,7 +546,7 @@ const Meetings = () => {
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                   />
                                 </svg>
                               </div>
