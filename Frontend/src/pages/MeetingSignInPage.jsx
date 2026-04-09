@@ -1,7 +1,7 @@
 // src/pages/MeetingSignInPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle } from 'react-icons/fa';
+import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle, FaCheckCircle, FaHome } from 'react-icons/fa';
 import SignaturePad from '../components/meeting/SignaturePad';
 import API from '../service/api';
 import toast from 'react-hot-toast';
@@ -14,6 +14,7 @@ const MeetingSignInPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',
     institution: '',
@@ -89,21 +90,130 @@ const MeetingSignInPage = () => {
       });
       
       if (response.data.success) {
-        toast.success(response.data.msg || 'Successfully signed in!');
-        setFormData({ fullName: '', institution: '', position: '', email: '' });
-        setSignature(null);
+        // Store success data
+        setSuccess({
+          name: formData.fullName,
+          institution: formData.institution,
+          position: formData.position,
+          meetingTitle: meeting.title,
+          meetingDate: meeting.meetingDate,
+          meetingLocation: meeting.location
+        });
         
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
+        toast.success(response.data.msg || 'Successfully signed in!');
       }
     } catch (error) {
       console.error('Error signing in:', error);
       toast.error(error.response?.data?.msg || 'Error signing in');
-    } finally {
       setSubmitting(false);
     }
   };
+
+  const handleReset = () => {
+    setSuccess(null);
+    setFormData({ fullName: '', institution: '', position: '', email: '' });
+    setSignature(null);
+    setSubmitting(false);
+  };
+
+  // Success Page Component
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
+          {/* Success Header */}
+          <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-8 text-center">
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaCheckCircle className="text-white text-4xl" />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Successfully Signed In!</h2>
+            <p className="text-white/80 mt-1">Thank you for your participation</p>
+          </div>
+          
+          {/* Success Content */}
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FaUserCheck className="text-green-600 text-2xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800">Welcome, {success.name}!</h3>
+              <p className="text-gray-500 text-sm mt-1">You have successfully signed in to the meeting</p>
+            </div>
+            
+            {/* Meeting Details */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <FaCalendarAlt className="text-primary-500" />
+                Meeting Details
+              </h4>
+              <div className="space-y-2 text-sm">
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Meeting:</span>
+                  <span className="font-medium text-gray-700">{success.meetingTitle}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Date:</span>
+                  <span className="font-medium text-gray-700">{new Date(success.meetingDate).toLocaleDateString()}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Location:</span>
+                  <span className="font-medium text-gray-700">{success.meetingLocation}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Institution:</span>
+                  <span className="font-medium text-gray-700">{success.institution}</span>
+                </p>
+                <p className="flex justify-between">
+                  <span className="text-gray-500">Position:</span>
+                  <span className="font-medium text-gray-700">{success.position}</span>
+                </p>
+              </div>
+            </div>
+            
+            {/* Next Steps */}
+            <div className="bg-blue-50 rounded-xl p-4 mb-6">
+              <h4 className="font-semibold text-blue-800 mb-2">What's Next?</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li className="flex items-center gap-2">
+                  <FaCheckCircle className="text-blue-500 text-xs" />
+                  <span>Your attendance has been recorded</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <FaCheckCircle className="text-blue-500 text-xs" />
+                  <span>Your signature has been saved securely</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <FaCheckCircle className="text-blue-500 text-xs" />
+                  <span>You can now proceed to the meeting room</span>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => navigate('/')}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              >
+                <FaHome />
+                Go to Home
+              </button>
+              <button
+                onClick={() => {
+                  setSuccess(null);
+                  navigate('/visitor-service');
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 transition"
+              >
+                <FaUserCheck />
+                New Registration
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -137,6 +247,7 @@ const MeetingSignInPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 py-8">
       <div className="max-w-2xl mx-auto px-4">
+        {/* Meeting Info Card */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
           <div className="text-center mb-4">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-3" />
@@ -176,6 +287,7 @@ const MeetingSignInPage = () => {
           </div>
         </div>
 
+        {/* Sign-in Form */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
