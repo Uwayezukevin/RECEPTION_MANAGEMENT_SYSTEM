@@ -20,7 +20,6 @@ meetingRouter.get('/:id/participants', authenticate, authorizeReceptionist, meet
 // Create, update, delete meetings - Only Admin
 meetingRouter.post('/', authenticate, authorizeAdmin, meetingController.CreateMeeting);
 meetingRouter.put('/:id/status', authenticate, authorizeAdmin, meetingController.UpdateMeetingStatus);
-meetingRouter.delete('/:id', authenticate, authorizeAdmin, meetingController.DeleteMeeting);
 
 // Export routes - Only Admin
 meetingRouter.get('/:id/export/pdf', authenticate, authorizeAdmin, meetingController.ExportMeetingToPDF);
