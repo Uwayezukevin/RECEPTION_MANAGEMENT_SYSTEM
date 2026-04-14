@@ -13,8 +13,6 @@ import Home from "./pages/Home";
 import RequestStatus from "./pages/RequestStatus";
 
 // Meeting Module Imports
-import Meetings from "./pages/admin/Meetings";
-import CreateMeeting from "./pages/admin/CreateMeeting";
 import MeetingSignInPage from "./pages/MeetingSignInPage";
 
 // Admin Module Imports
@@ -70,23 +68,6 @@ const App = () => {
             }
           />
           
-          {/* Meeting Routes (accessible by both Receptionist and Admin) */}
-          <Route
-            path="/meetings"
-            element={
-              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                <Meetings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/meetings/create"
-            element={
-              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                <CreateMeeting />
-              </ProtectedRoute>
-            }
-          />
           
           {/* Admin Only Routes */}
           <Route

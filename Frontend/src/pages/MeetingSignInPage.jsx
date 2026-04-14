@@ -1,7 +1,7 @@
-// src/pages/MeetingSignInPage.jsx
+// src/pages/MeetingSignInPage.jsx - White Theme
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle, FaCheckCircle, FaHome, FaQrcode } from 'react-icons/fa';
+import { FaSpinner, FaUserCheck, FaSignature, FaBuilding, FaUserTie, FaEnvelope, FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserCircle, FaCheckCircle, FaHome } from 'react-icons/fa';
 import SignaturePad from '../components/meeting/SignaturePad';
 import API from '../service/api';
 import toast from 'react-hot-toast';
@@ -114,10 +114,10 @@ const MeetingSignInPage = () => {
   // Success Page Component
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
           {/* Success Header */}
-          <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-8 text-center">
+          <div className="bg-green-600 px-6 py-8 text-center">
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
               <FaCheckCircle className="text-white text-4xl" />
             </div>
@@ -136,9 +136,9 @@ const MeetingSignInPage = () => {
             </div>
             
             {/* Meeting Details */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
               <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <FaCalendarAlt className="text-primary-500" />
+                <FaCalendarAlt className="text-primary-600" />
                 Meeting Details
               </h4>
               <div className="space-y-2 text-sm">
@@ -176,7 +176,7 @@ const MeetingSignInPage = () => {
             </div>
             
             {/* Next Steps */}
-            <div className="bg-blue-50 rounded-xl p-4 mb-6">
+            <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
               <h4 className="font-semibold text-blue-800 mb-2">What's Next?</h4>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li className="flex items-center gap-2">
@@ -198,7 +198,7 @@ const MeetingSignInPage = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => navigate('/')}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg hover:from-primary-700 hover:to-secondary-700 transition"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
               >
                 <FaHome />
                 Go to Home
@@ -212,10 +212,10 @@ const MeetingSignInPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
-          <p className="text-white text-lg">Loading meeting details...</p>
+          <FaSpinner className="animate-spin text-4xl text-primary-600 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">Loading meeting details...</p>
         </div>
       </div>
     );
@@ -223,14 +223,14 @@ const MeetingSignInPage = () => {
 
   if (error || !meeting) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center">
-        <div className="text-center text-white">
-          <FaUserCircle className="text-6xl mx-auto mb-4 text-white/50" />
-          <h2 className="text-2xl font-bold mb-2">Meeting Not Found</h2>
-          <p className="text-white/70 mb-6">{error || 'The meeting you\'re looking for doesn\'t exist or has been removed.'}</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <FaUserCircle className="text-6xl mx-auto mb-4 text-gray-400" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Meeting Not Found</h2>
+          <p className="text-gray-500 mb-6">{error || 'The meeting you\'re looking for doesn\'t exist or has been removed.'}</p>
           <button
             onClick={() => navigate('/')}
-            className="px-6 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition"
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
           >
             Go Home
           </button>
@@ -240,41 +240,41 @@ const MeetingSignInPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 py-8">
+    <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Meeting Info Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
           <div className="text-center mb-4">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-3" />
-            <h1 className="text-2xl font-bold text-white">{meeting.title}</h1>
-            <p className="text-white/80 mt-2 text-sm">{meeting.description}</p>
+            <h1 className="text-2xl font-bold text-gray-800">{meeting.title}</h1>
+            <p className="text-gray-500 mt-2 text-sm">{meeting.description}</p>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 text-white/90 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-gray-600 text-sm">
             <div>
-              <p className="font-semibold flex items-center gap-2">
-                <FaCalendarAlt className="text-primary-400" />
+              <p className="font-semibold flex items-center gap-2 text-gray-700">
+                <FaCalendarAlt className="text-primary-500" />
                 Date
               </p>
               <p className="mt-1">{new Date(meeting.meetingDate).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="font-semibold flex items-center gap-2">
-                <FaClock className="text-primary-400" />
+              <p className="font-semibold flex items-center gap-2 text-gray-700">
+                <FaClock className="text-primary-500" />
                 Time
               </p>
               <p className="mt-1">{meeting.startTime} - {meeting.endTime}</p>
             </div>
             <div>
-              <p className="font-semibold flex items-center gap-2">
-                <FaMapMarkerAlt className="text-primary-400" />
+              <p className="font-semibold flex items-center gap-2 text-gray-700">
+                <FaMapMarkerAlt className="text-primary-500" />
                 Location
               </p>
               <p className="mt-1">{meeting.location}</p>
             </div>
             <div>
-              <p className="font-semibold flex items-center gap-2">
-                <FaUserTie className="text-primary-400" />
+              <p className="font-semibold flex items-center gap-2 text-gray-700">
+                <FaUserTie className="text-primary-500" />
                 Meeting Leader
               </p>
               <p className="mt-1">{meeting.meetingLeader?.name}</p>
@@ -283,13 +283,13 @@ const MeetingSignInPage = () => {
         </div>
 
         {/* Sign-in Form */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4">
+        <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+          <div className="bg-primary-600 px-6 py-4">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <FaSignature />
               Meeting Sign-In
             </h2>
-            <p className="text-white/80 text-sm">Please fill in your details and sign below</p>
+            <p className="text-primary-100 text-sm">Please fill in your details and sign below</p>
           </div>
           
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
@@ -376,7 +376,7 @@ const MeetingSignInPage = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-3 rounded-xl font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>
@@ -393,7 +393,7 @@ const MeetingSignInPage = () => {
           </form>
         </div>
 
-        <p className="text-center text-white/50 text-xs mt-6">
+        <p className="text-center text-gray-400 text-xs mt-6">
           Your signature confirms your attendance at this meeting
         </p>
       </div>
