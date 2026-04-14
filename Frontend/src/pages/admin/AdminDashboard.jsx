@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { 
-  FaUsers, 
   FaCalendarAlt, 
   FaUserCheck, 
   FaClipboardList,
@@ -79,7 +78,6 @@ const AdminDashboard = () => {
         if (data.stats) {
           setStats(prev => ({ ...prev, ...data.stats }));
           setLastUpdated(new Date());
-          toast.success('Dashboard updated', { icon: '🔄', duration: 2000 });
         }
       });
       
@@ -102,18 +100,16 @@ const AdminDashboard = () => {
     try {
       console.log("Fetching dashboard data...");
       
-      // Fetch meetings
-      const meetingsRes = await API.get('/meetings');
+      // Use the correct API methods
+      const meetingsRes = await API.getMeetings();
       console.log("Meetings response:", meetingsRes.data);
       const meetings = meetingsRes.data?.meetings || [];
       
-      // Fetch visitors
-      const visitorsRes = await API.get('/visitors');
+      const visitorsRes = await API.getVisitors();
       console.log("Visitors response:", visitorsRes.data);
       const visitors = visitorsRes.data?.visitors || [];
       
-      // Fetch requests
-      const requestsRes = await API.get('/requests');
+      const requestsRes = await API.getAllRequests();
       console.log("Requests response:", requestsRes.data);
       const requests = requestsRes.data?.requests || [];
       
