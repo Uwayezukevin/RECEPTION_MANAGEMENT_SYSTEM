@@ -63,16 +63,10 @@ const Home = () => {
             <img src={logo} className="h-20 sm:h-24 w-auto" alt="MININFRA LOGO" />
           </div>
           
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-primary-100 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <FaStar className="text-yellow-500" />
-            <span>Official Reception Management System</span>
-          </div>
-          
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Welcome to the
             <span className="block text-primary-600 mt-2">
-              Reception Management System
+              Internal MININFRA Management System
             </span>
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
@@ -113,10 +107,6 @@ const Home = () => {
           
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-6 mt-12">
-            <div className="flex items-center gap-2 text-gray-500 text-sm">
-              <FaCheckCircle className="text-green-500" />
-              <span>ISO Certified</span>
-            </div>
             <div className="flex items-center gap-2 text-gray-500 text-sm">
               <MdSecurity className="text-blue-500" />
               <span>Secure Platform</span>
