@@ -1,4 +1,4 @@
-// src/pages/admin/AdminDashboard.jsx - Complete with Create Meeting & Export
+// src/pages/admin/AdminDashboard.jsx - Horizontal Filters Layout
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -449,17 +449,48 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* Meetings Section */}
+        {/* Meetings Section - Horizontal Filters */}
         {activeTab === "meetings" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                <div><label className="text-xs text-gray-500 block mb-1">Status</label><select value={meetingFilter.status} onChange={(e) => setMeetingFilter({...meetingFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Status</option><option value="scheduled">Scheduled</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Type</label><select value={meetingFilter.type} onChange={(e) => setMeetingFilter({...meetingFilter, type: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Types</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="special">Special</option></select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">From Date</label><input type="date" value={meetingFilter.startDate} onChange={(e) => setMeetingFilter({...meetingFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div><label className="text-xs text-gray-500 block mb-1">To Date</label><input type="date" value={meetingFilter.endDate} onChange={(e) => setMeetingFilter({...meetingFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Search</label><input type="text" placeholder="Title or location..." value={meetingFilter.search} onChange={(e) => setMeetingFilter({...meetingFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div className="flex items-end gap-2"><button onClick={resetMeetingFilters} className="px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset</button></div>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[120px]">
+                  <label className="text-xs text-gray-500 block mb-1">Status</label>
+                  <select value={meetingFilter.status} onChange={(e) => setMeetingFilter({...meetingFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                    <option value="all">All Status</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[120px]">
+                  <label className="text-xs text-gray-500 block mb-1">Type</label>
+                  <select value={meetingFilter.type} onChange={(e) => setMeetingFilter({...meetingFilter, type: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                    <option value="all">All Types</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="special">Special</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <label className="text-xs text-gray-500 block mb-1">From Date</label>
+                  <input type="date" value={meetingFilter.startDate} onChange={(e) => setMeetingFilter({...meetingFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <label className="text-xs text-gray-500 block mb-1">To Date</label>
+                  <input type="date" value={meetingFilter.endDate} onChange={(e) => setMeetingFilter({...meetingFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div className="flex-[2] min-w-[180px]">
+                  <label className="text-xs text-gray-500 block mb-1">Search</label>
+                  <input type="text" placeholder="Title or location..." value={meetingFilter.search} onChange={(e) => setMeetingFilter({...meetingFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div>
+                  <button onClick={resetMeetingFilters} className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -488,7 +519,12 @@ const AdminDashboard = () => {
                             </div>
                           )}
                         </div>
-                        <select onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)} value={meeting.status} className="text-sm border border-gray-200 rounded px-2 py-1 bg-white"><option value="scheduled">Scheduled</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+                        <select onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)} value={meeting.status} className="text-sm border border-gray-200 rounded px-2 py-1 bg-white">
+                          <option value="scheduled">Scheduled</option>
+                          <option value="ongoing">Ongoing</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
                       </td>
                     </tr>
                   ))}
@@ -499,17 +535,44 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Visitors Section */}
+        {/* Visitors Section - Horizontal Filters */}
         {activeTab === "visitors" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                <div><label className="text-xs text-gray-500 block mb-1">Status</label><select value={visitorFilter.status} onChange={(e) => setVisitorFilter({...visitorFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Status</option><option value="checked-in">Checked In</option><option value="checked-out">Checked Out</option></select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Nationality</label><select value={visitorFilter.nationality} onChange={(e) => setVisitorFilter({...visitorFilter, nationality: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All</option><option value="rwandan">Rwandan</option><option value="foreigner">Foreigner</option></select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">From Date</label><input type="date" value={visitorFilter.startDate} onChange={(e) => setVisitorFilter({...visitorFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div><label className="text-xs text-gray-500 block mb-1">To Date</label><input type="date" value={visitorFilter.endDate} onChange={(e) => setVisitorFilter({...visitorFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Search</label><input type="text" placeholder="Name or email..." value={visitorFilter.search} onChange={(e) => setVisitorFilter({...visitorFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div className="flex items-end"><button onClick={resetVisitorFilters} className="w-full px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset Filters</button></div>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[120px]">
+                  <label className="text-xs text-gray-500 block mb-1">Status</label>
+                  <select value={visitorFilter.status} onChange={(e) => setVisitorFilter({...visitorFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                    <option value="all">All Status</option>
+                    <option value="checked-in">Checked In</option>
+                    <option value="checked-out">Checked Out</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[120px]">
+                  <label className="text-xs text-gray-500 block mb-1">Nationality</label>
+                  <select value={visitorFilter.nationality} onChange={(e) => setVisitorFilter({...visitorFilter, nationality: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                    <option value="all">All</option>
+                    <option value="rwandan">Rwandan</option>
+                    <option value="foreigner">Foreigner</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <label className="text-xs text-gray-500 block mb-1">From Date</label>
+                  <input type="date" value={visitorFilter.startDate} onChange={(e) => setVisitorFilter({...visitorFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <label className="text-xs text-gray-500 block mb-1">To Date</label>
+                  <input type="date" value={visitorFilter.endDate} onChange={(e) => setVisitorFilter({...visitorFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div className="flex-[2] min-w-[180px]">
+                  <label className="text-xs text-gray-500 block mb-1">Search</label>
+                  <input type="text" placeholder="Name or email..." value={visitorFilter.search} onChange={(e) => setVisitorFilter({...visitorFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div>
+                  <button onClick={resetVisitorFilters} className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -533,16 +596,38 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Requests Section */}
+        {/* Requests Section - Horizontal Filters */}
         {activeTab === "requests" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <div><label className="text-xs text-gray-500 block mb-1">Status</label><select value={requestFilter.status} onChange={(e) => setRequestFilter({...requestFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">From Date</label><input type="date" value={requestFilter.startDate} onChange={(e) => setRequestFilter({...requestFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div><label className="text-xs text-gray-500 block mb-1">To Date</label><input type="date" value={requestFilter.endDate} onChange={(e) => setRequestFilter({...requestFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Search</label><input type="text" placeholder="Service name..." value={requestFilter.search} onChange={(e) => setRequestFilter({...requestFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div className="flex items-end gap-2"><button onClick={resetRequestFilters} className="px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset</button></div>
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[140px]">
+                  <label className="text-xs text-gray-500 block mb-1">Status</label>
+                  <select value={requestFilter.status} onChange={(e) => setRequestFilter({...requestFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="completed">Completed</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <label className="text-xs text-gray-500 block mb-1">From Date</label>
+                  <input type="date" value={requestFilter.startDate} onChange={(e) => setRequestFilter({...requestFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div className="flex-1 min-w-[130px]">
+                  <label className="text-xs text-gray-500 block mb-1">To Date</label>
+                  <input type="date" value={requestFilter.endDate} onChange={(e) => setRequestFilter({...requestFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div className="flex-[2] min-w-[200px]">
+                  <label className="text-xs text-gray-500 block mb-1">Search</label>
+                  <input type="text" placeholder="Service name..." value={requestFilter.search} onChange={(e) => setRequestFilter({...requestFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white" />
+                </div>
+                <div>
+                  <button onClick={resetRequestFilters} className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    Reset
+                  </button>
+                </div>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -558,12 +643,16 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4">{getStatusBadge(request.status)}</td>
                       <td className="px-6 py-4">
                         {request.status === 'pending' && (
-                          <button onClick={() => { setSelectedRequest(request); setNewStatus("approved"); setStatusNote(""); setShowUpdateStatus(true); }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">Update</button>
+                          <button onClick={() => { setSelectedRequest(request); setNewStatus("approved"); setStatusNote(""); setShowUpdateStatus(true); }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">
+                            Update
+                          </button>
                         )}
-                      </td>
-                    </tr>
+                       </td>
+                     </tr>
                   ))}
-                  {filteredRequests.length === 0 && <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-400">No requests found</td></tr>}
+                  {filteredRequests.length === 0 && (
+                    <tr><td colSpan="6" className="px-6 py-8 text-center text-gray-400">No requests found</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -595,7 +684,6 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Other Modals (QR Code, Participants, Update Status) remain the same */}
         {/* QR Code Modal */}
         {showQRCode && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowQRCode(null)}>
