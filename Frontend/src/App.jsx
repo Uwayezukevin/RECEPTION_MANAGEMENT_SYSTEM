@@ -70,23 +70,6 @@ const App = () => {
             }
           />
           
-          {/* Meeting Routes (accessible by both Receptionist and Admin) */}
-          <Route
-            path="/meetings"
-            element={
-              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                <Meetings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/meetings/create"
-            element={
-              <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
-                <CreateMeeting />
-              </ProtectedRoute>
-            }
-          />
           
           {/* Admin Only Routes */}
           <Route

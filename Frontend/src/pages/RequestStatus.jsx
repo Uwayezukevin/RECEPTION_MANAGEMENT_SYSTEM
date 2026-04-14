@@ -1,4 +1,4 @@
-// src/pages/RequestStatus.jsx - With Real-time Updates
+// src/pages/RequestStatus.jsx - White Theme with Real-time Updates
 import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import {
@@ -56,12 +56,10 @@ const RequestStatus = () => {
   const handleRequestUpdate = useCallback((updateData) => {
     console.log("Real-time update received:", updateData);
     
-    // Update the request with new data
     if (updateData.request) {
       setRequest(updateData.request);
       setVisitor(updateData.request.visitor);
     } else if (updateData.status) {
-      // If only status is provided, update the request status
       setRequest(prev => ({
         ...prev,
         status: updateData.status,
@@ -73,7 +71,6 @@ const RequestStatus = () => {
     
     setLastUpdate(new Date());
     
-    // Show toast notification
     const statusMessages = {
       approved: "✅ Your request has been approved!",
       rejected: "❌ Your request has been rejected.",
@@ -104,16 +101,13 @@ const RequestStatus = () => {
   // Setup WebSocket for real-time updates
   useEffect(() => {
     if (requestId && request) {
-      // Connect to WebSocket for this specific request
       API.initVisitorSocket(requestId);
       
-      // Register callback for request updates
       const unsubscribe = API.onRequestUpdate(handleRequestUpdate);
       
       setIsConnected(true);
       console.log("Real-time updates enabled for request:", requestId);
       
-      // Cleanup on unmount
       return () => {
         unsubscribe();
         API.disconnectVisitorSocket();
@@ -170,8 +164,8 @@ const RequestStatus = () => {
 
   if (!requestId) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center border border-gray-200">
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Logo" className="h-20 w-auto" />
           </div>
@@ -180,7 +174,7 @@ const RequestStatus = () => {
           <p className="text-gray-600 mb-6">Please provide a valid request ID to check status.</p>
           <Link
             to="/"
-            className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+            className="inline-flex items-center space-x-2 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FaHome />
             <span>Go to Home</span>
@@ -192,13 +186,13 @@ const RequestStatus = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="flex justify-center mb-6">
-            <img src={logo} alt="Logo" className="h-20 w-auto animate-pulse" />
+            <img src={logo} alt="Logo" className="h-20 w-auto" />
           </div>
-          <FaSpinner className="animate-spin text-5xl text-white mx-auto mb-4" />
-          <p className="text-white text-lg">Loading request details...</p>
+          <FaSpinner className="animate-spin text-4xl text-primary-600 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">Loading request details...</p>
         </div>
       </div>
     );
@@ -206,8 +200,8 @@ const RequestStatus = () => {
 
   if (!request) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center border border-gray-200">
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Logo" className="h-20 w-auto" />
           </div>
@@ -216,7 +210,7 @@ const RequestStatus = () => {
           <p className="text-gray-600 mb-6">The request you're looking for doesn't exist or has been removed.</p>
           <Link
             to="/"
-            className="inline-flex items-center space-x-2 bg-primary-500 text-white px-6 py-2 rounded-lg hover:bg-primary-600 transition-colors"
+            className="inline-flex items-center space-x-2 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
             <FaHome />
             <span>Back to Home</span>
@@ -227,13 +221,13 @@ const RequestStatus = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 py-12 px-4">
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Navigation Buttons */}
         <div className="flex justify-between items-center mb-6">
           <Link
             to="/"
-            className="inline-flex items-center space-x-2 text-white hover:text-primary-200 transition-colors"
+            className="inline-flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors"
           >
             <FaArrowLeft />
             <span>Back to Home</span>
@@ -241,21 +235,21 @@ const RequestStatus = () => {
           <div className="flex items-center space-x-3">
             {/* Real-time indicator */}
             {isConnected && (
-              <div className="flex items-center space-x-1 text-green-300 text-sm">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="flex items-center space-x-1 text-green-600 text-sm">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span>Live</span>
               </div>
             )}
             <button
               onClick={handleRefresh}
-              className="inline-flex items-center space-x-2 bg-white/20 text-white px-3 py-2 rounded-lg hover:bg-white/30 transition-colors"
+              className="inline-flex items-center space-x-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors"
               title="Refresh"
             >
               <FaSync />
             </button>
             <button
               onClick={copyLink}
-              className="inline-flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors"
+              className="inline-flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
             >
               <FaCopy />
               <span>Copy Link</span>
@@ -265,14 +259,14 @@ const RequestStatus = () => {
 
         {/* Last update timestamp */}
         {lastUpdate && (
-          <div className="text-center mb-4 text-white/60 text-sm">
+          <div className="text-center mb-4 text-gray-500 text-sm">
             Last updated: {lastUpdate.toLocaleTimeString()}
             {isConnected && " (auto-updates enabled)"}
           </div>
         )}
 
         {/* Main Card */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
           {/* Header with Logo */}
           <div className={`p-6 border-b ${getStatusColor(request.status)}`}>
             <div className="flex items-center justify-between">
@@ -289,8 +283,8 @@ const RequestStatus = () => {
                   </div>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">Request Status</h1>
-                  <p className="text-sm opacity-75">
+                  <h1 className="text-2xl font-bold text-gray-800">Request Status</h1>
+                  <p className="text-sm text-gray-500">
                     ID: #{request._id.slice(-8).toUpperCase()}
                   </p>
                 </div>
@@ -306,9 +300,9 @@ const RequestStatus = () => {
 
           <div className="p-6 space-y-6">
             {/* Service Details */}
-            <div className="bg-gray-50 rounded-xl p-5">
+            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
-                <FaClipboardList className="text-primary-500" />
+                <FaClipboardList className="text-primary-600" />
                 <span>Service Details</span>
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -337,9 +331,9 @@ const RequestStatus = () => {
 
             {/* Visitor Details */}
             {visitor && (
-              <div className="bg-gray-50 rounded-xl p-5">
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center space-x-2">
-                  <FaUser className="text-primary-500" />
+                  <FaUser className="text-primary-600" />
                   <span>Visitor Details</span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -374,9 +368,9 @@ const RequestStatus = () => {
 
             {/* Message */}
             {request.message && (
-              <div className="bg-gray-50 rounded-xl p-5">
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center space-x-2">
-                  <FaEnvelope className="text-primary-500" />
+                  <FaEnvelope className="text-primary-600" />
                   <span>Your Message</span>
                 </h3>
                 <p className="text-gray-700 italic">"{request.message}"</p>
@@ -392,7 +386,7 @@ const RequestStatus = () => {
             )}
 
             {/* Timeline */}
-            <div className="bg-gray-50 rounded-xl p-5">
+            <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Timeline</h3>
               <div className="space-y-3">
                 <div className="flex items-start space-x-3">

@@ -1,4 +1,4 @@
-// src/pages/Register.jsx (rename from RegisterReceptionist.jsx)
+// src/pages/Register.jsx - White Theme
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { 
@@ -42,7 +42,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -53,7 +52,6 @@ const Register = () => {
       return;
     }
     
-    // If registering as admin, validate admin secret
     if (selectedRole === "admin" && !formData.adminSecret) {
       toast.error("Admin secret key is required to register as admin");
       return;
@@ -69,7 +67,6 @@ const Register = () => {
         role: selectedRole
       };
       
-      // Add admin secret only if registering as admin
       if (selectedRole === "admin") {
         registrationData.adminSecret = formData.adminSecret;
       }
@@ -78,8 +75,6 @@ const Register = () => {
       
       if (response.data.success) {
         toast.success(response.data.msg);
-        
-        // Redirect to login after 2 seconds
         setTimeout(() => {
           navigate("/login");
         }, 2000);
@@ -93,8 +88,8 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-6">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-4" />
@@ -128,7 +123,7 @@ const Register = () => {
                 onClick={() => setSelectedRole("admin")}
                 className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
                   selectedRole === "admin"
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    ? "border-primary-500 bg-primary-50 text-primary-700"
                     : "border-gray-200 hover:border-gray-300 text-gray-600"
                 }`}
               >
@@ -139,7 +134,6 @@ const Register = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
@@ -158,7 +152,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -177,7 +170,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Admin Secret Key - Only show when registering as admin */}
             {selectedRole === "admin" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -208,7 +200,6 @@ const Register = () => {
               </div>
             )}
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -234,7 +225,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm Password
@@ -253,28 +243,10 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Role Info Box */}
-            {selectedRole === "receptionist" && (
-              <div className="bg-blue-50 rounded-lg p-3">
-                <p className="text-xs text-blue-700">
-                  Receptionists can manage visitors, meetings, and service requests.
-                </p>
-              </div>
-            )}
-
-            {selectedRole === "admin" && (
-              <div className="bg-purple-50 rounded-lg p-3">
-                <p className="text-xs text-purple-700">
-                  Admin users have full system access including user management and all administrative functions.
-                </p>
-              </div>
-            )}
-
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-2 rounded-lg font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -289,12 +261,8 @@ const Register = () => {
               )}
             </button>
 
-            {/* Back to Login Link */}
             <div className="text-center pt-2">
-              <Link 
-                to="/login" 
-                className="text-gray-500 hover:text-gray-700 text-sm flex items-center justify-center gap-1"
-              >
+              <Link to="/login" className="text-gray-500 hover:text-gray-700 text-sm flex items-center justify-center gap-1">
                 <FaArrowLeft className="text-xs" />
                 Back to Login
               </Link>

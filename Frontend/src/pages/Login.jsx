@@ -1,8 +1,8 @@
-// src/pages/Login.jsx
+// src/pages/Login.jsx - White Theme
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import toast from "react-hot-toast";  // ✅ Added missing import
+import toast from "react-hot-toast";
 import { 
   FaEnvelope, 
   FaLock, 
@@ -28,14 +28,12 @@ const Login = () => {
     try {
       const response = await login(email, password);
       
-      // Check if the logged-in user's role matches the selected role
       if (response.user.role !== selectedRole) {
         toast.error(`This account is registered as ${response.user.role}. Please select the correct role.`);
         setLoading(false);
         return;
       }
       
-      // Role-based redirect
       if (response.user.role === "admin") {
         navigate("/admin/dashboard");
       } else if (response.user.role === "receptionist") {
@@ -52,8 +50,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-800 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-8">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-4" />
@@ -84,7 +82,7 @@ const Login = () => {
                 onClick={() => setSelectedRole("admin")}
                 className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
                   selectedRole === "admin"
-                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                    ? "border-primary-500 bg-primary-50 text-primary-700"
                     : "border-gray-200 hover:border-gray-300 text-gray-600"
                 }`}
               >
@@ -132,7 +130,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary-600 to-secondary-600 text-white py-2 rounded-lg font-semibold hover:from-primary-700 hover:to-secondary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-primary-600 text-white py-2 rounded-lg font-semibold hover:bg-primary-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? (
                 <>

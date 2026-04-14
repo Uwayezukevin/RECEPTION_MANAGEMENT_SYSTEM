@@ -5,16 +5,27 @@
     <link rel="icon" type="image/svg+xml" href="/src/assets/image.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover" />
     <meta name="theme-color" content="#2563eb" />
+    <meta name="color-scheme" content="light" />
     <title>RECEPTION MANAGEMENT SYSTEM</title>
+    
+    <!-- Preconnect for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
     <!-- Fallback styles for older browsers (like Sony Xperia SO-01J) -->
     <style>
       /* Solid color fallback that works on all devices */
+      * {
+        box-sizing: border-box;
+      }
+      
       body {
         margin: 0;
         padding: 0;
         background: #2563eb;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       
       #root {
@@ -33,6 +44,20 @@
         padding: 20px;
       }
       
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 16px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
       /* Fix for older browsers that don't support gradients */
       .no-gradient {
         background: #2563eb !important;
@@ -42,15 +67,102 @@
       .force-white-bg {
         background-color: #ffffff !important;
       }
+      
+      /* Fallback for flexbox (older browsers) */
+      .fallback-block {
+        display: block !important;
+      }
+      
+      .fallback-inline-block {
+        display: inline-block !important;
+      }
+      
+      /* Ensure buttons are visible on older devices */
+      button {
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      
+      /* Improve tap targets on mobile */
+      a, button {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      /* Fix for older WebKit browsers */
+      input, textarea, select, button {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      
+      /* Ensure images don't overflow */
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+      
+      /* Simple scrollbar that works everywhere */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #3b82f6;
+        border-radius: 4px;
+      }
+      
+      /* Force GPU acceleration for smoother animations on older devices */
+      .gpu-accelerated {
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+      }
     </style>
+    
+    <!-- Polyfill for older browsers -->
+    <script>
+      // Check for older browser features
+      (function() {
+        // Add class to body for feature detection
+        var body = document.body;
+        
+        // Check for flexbox support
+        var div = document.createElement('div');
+        div.style.display = 'flex';
+        if (div.style.display !== 'flex') {
+          body.classList.add('no-flexbox');
+        }
+        
+        // Check for CSS Grid support
+        div.style.display = 'grid';
+        if (div.style.display !== 'grid') {
+          body.classList.add('no-grid');
+        }
+        
+        // Check for transform support
+        div.style.transform = 'translateZ(0)';
+        if (!div.style.transform && !div.style.webkitTransform) {
+          body.classList.add('no-transform');
+        }
+      })();
+    </script>
   </head>
   <body>
     <!-- Loading fallback that shows while React loads -->
     <div id="root">
       <div class="loading-fallback">
         <div>
-          <h2 style="margin: 0 0 8px 0;">Loading Reception System</h2>
-          <p style="margin: 0; opacity: 0.8;">Please wait...</p>
+          <div class="loading-spinner"></div>
+          <h2 style="margin: 0 0 8px 0; font-size: 18px;">Loading Reception System</h2>
+          <p style="margin: 0; opacity: 0.8; font-size: 14px;">Please wait...</p>
         </div>
       </div>
     </div>
@@ -73,13 +185,28 @@
           max-width: 400px;
           text-align: center;
           color: #333;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         ">
-          <h2 style="margin: 0 0 8px 0;">JavaScript Required</h2>
+          <h2 style="margin: 0 0 8px 0; color: #2563eb;">JavaScript Required</h2>
           <p style="margin: 0 0 16px 0; color: #666;">Please enable JavaScript to use this application.</p>
           <p style="margin: 0; font-size: 12px; color: #999;">If you're having trouble, try using Chrome or Firefox browser.</p>
+          <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;" />
+          <p style="margin: 0; font-size: 11px; color: #bbb;">Reception Management System v2.0</p>
         </div>
       </div>
     </noscript>
+    
+    <!-- Critical script for older browsers to handle basic functionality -->
+    <script>
+      // Simple error handler to prevent white screen on older browsers
+      window.addEventListener('error', function(e) {
+        console.warn('Caught error:', e.message);
+        var root = document.getElementById('root');
+        if (root && root.innerHTML === '' || root.innerHTML === '<div class="loading-fallback"><div><div class="loading-spinner"></div><h2 style="margin: 0 0 8px 0; font-size: 18px;">Loading Reception System</h2><p style="margin: 0; opacity: 0.8; font-size: 14px;">Please wait...</p></div></div>') {
+          root.innerHTML = '<div style="min-height:100vh;background:#2563eb;display:flex;align-items:center;justify-content:center;padding:20px;color:white;text-align:center;"><div><h2>Loading Issue Detected</h2><p>Please refresh the page or try a different browser.</p><button onclick="location.reload()" style="margin-top:16px;padding:10px 20px;background:white;color:#2563eb;border:none;border-radius:8px;">Refresh</button></div></div>';
+        }
+      });
+    </script>
     
     <script type="module" src="/src/main.jsx"></script>
   </body>
