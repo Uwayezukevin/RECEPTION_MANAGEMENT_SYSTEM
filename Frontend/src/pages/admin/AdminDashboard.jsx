@@ -1,4 +1,4 @@
-// src/pages/admin/AdminDashboard.jsx - Clean White Background with Proper Filters
+// src/pages/admin/AdminDashboard.jsx - Complete with Create Meeting & Export
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -30,7 +30,12 @@ import {
   FaPrint,
   FaSyncAlt,
   FaUserTie,
-  FaCalendarDay
+  FaCalendarDay,
+  FaPlus,
+  FaTimesCircle,
+  FaFilePdf,
+  FaFileExcel,
+  FaFileCode
 } from "react-icons/fa";
 import { MdAdminPanelSettings, MdPendingActions, MdEventAvailable } from "react-icons/md";
 import { QRCodeSVG } from "qrcode.react";
@@ -93,6 +98,24 @@ const AdminDashboard = () => {
   const [newStatus, setNewStatus] = useState("approved");
   const [statusNote, setStatusNote] = useState("");
   const [updating, setUpdating] = useState(false);
+  
+  // Create Meeting Modal
+  const [showCreateMeeting, setShowCreateMeeting] = useState(false);
+  const [creatingMeeting, setCreatingMeeting] = useState(false);
+  const [newMeeting, setNewMeeting] = useState({
+    title: "Weekly Friday Meeting",
+    description: "",
+    meetingLeader: { name: "", position: "", department: "" },
+    meetingDate: "",
+    startTime: "09:00",
+    endTime: "11:00",
+    location: "Main Conference Room",
+    meetingType: "weekly"
+  });
+  
+  // Export states
+  const [exporting, setExporting] = useState(false);
+  const [openExportMenu, setOpenExportMenu] = useState(null);
 
   useEffect(() => {
     fetchAllData();
@@ -214,6 +237,81 @@ const AdminDashboard = () => {
     }
   };
 
+  const exportMeeting = async (meetingId, format) => {
+    setExporting(true);
+    try {
+      let response;
+      let filename = '';
+      
+      switch (format) {
+        case 'pdf':
+          response = await API.exportMeetingToPDF(meetingId);
+          filename = `meeting_export_${Date.now()}.pdf`;
+          break;
+        case 'excel':
+          response = await API.exportMeetingToExcel(meetingId);
+          filename = `meeting_export_${Date.now()}.xlsx`;
+          break;
+        case 'html':
+          response = await API.exportMeetingToHTML(meetingId);
+          filename = `meeting_export_${Date.now()}.html`;
+          break;
+        default:
+          return;
+      }
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Meeting exported as ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export meeting');
+    } finally {
+      setExporting(false);
+      setOpenExportMenu(null);
+    }
+  };
+
+  const handleCreateMeeting = async (e) => {
+    e.preventDefault();
+    
+    if (!newMeeting.description || !newMeeting.meetingLeader.name || !newMeeting.meetingLeader.position) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    setCreatingMeeting(true);
+    try {
+      const response = await API.createMeeting(newMeeting);
+      if (response.data.success) {
+        toast.success("Meeting created successfully!");
+        setShowCreateMeeting(false);
+        setNewMeeting({
+          title: "Weekly Friday Meeting",
+          description: "",
+          meetingLeader: { name: "", position: "", department: "" },
+          meetingDate: "",
+          startTime: "09:00",
+          endTime: "11:00",
+          location: "Main Conference Room",
+          meetingType: "weekly"
+        });
+        fetchAllData(true);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.msg || "Error creating meeting");
+    } finally {
+      setCreatingMeeting(false);
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: FaClock, label: 'Pending' },
@@ -296,6 +394,9 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex gap-3">
+            <button onClick={() => setShowCreateMeeting(true)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all shadow-sm">
+              <FaPlus /> <span>Create Meeting</span>
+            </button>
             <button onClick={() => fetchAllData(false)} className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
               <FaSyncAlt className="text-sm" />
               <span>Refresh</span>
@@ -351,19 +452,16 @@ const AdminDashboard = () => {
         {/* Meetings Section */}
         {activeTab === "meetings" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Filters Bar */}
             <div className="p-4 bg-gray-50 border-b border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                <div><label className="text-xs text-gray-500 block mb-1">Status</label><select value={meetingFilter.status} onChange={(e) => setMeetingFilter({...meetingFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"><option value="all">All Status</option><option value="scheduled">Scheduled</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
-                <div><label className="text-xs text-gray-500 block mb-1">Type</label><select value={meetingFilter.type} onChange={(e) => setMeetingFilter({...meetingFilter, type: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500"><option value="all">All Types</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="special">Special</option></select></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Status</label><select value={meetingFilter.status} onChange={(e) => setMeetingFilter({...meetingFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Status</option><option value="scheduled">Scheduled</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></div>
+                <div><label className="text-xs text-gray-500 block mb-1">Type</label><select value={meetingFilter.type} onChange={(e) => setMeetingFilter({...meetingFilter, type: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Types</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="special">Special</option></select></div>
                 <div><label className="text-xs text-gray-500 block mb-1">From Date</label><input type="date" value={meetingFilter.startDate} onChange={(e) => setMeetingFilter({...meetingFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
                 <div><label className="text-xs text-gray-500 block mb-1">To Date</label><input type="date" value={meetingFilter.endDate} onChange={(e) => setMeetingFilter({...meetingFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
                 <div><label className="text-xs text-gray-500 block mb-1">Search</label><input type="text" placeholder="Title or location..." value={meetingFilter.search} onChange={(e) => setMeetingFilter({...meetingFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div className="flex items-end"><button onClick={resetMeetingFilters} className="w-full px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset Filters</button></div>
+                <div className="flex items-end gap-2"><button onClick={resetMeetingFilters} className="px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset</button></div>
               </div>
             </div>
-            
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leader</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participants</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th></tr></thead>
@@ -377,9 +475,19 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4 text-gray-600">{meeting.meetingLeader?.name}</td>
                       <td className="px-6 py-4 text-gray-600">{meeting.participantCount || 0}</td>
                       <td className="px-6 py-4">{getStatusBadge(meeting.status)}</td>
-                      <td className="px-6 py-4 flex gap-2">
+                      <td className="px-6 py-4 flex gap-2 flex-wrap">
                         <button onClick={() => setShowQRCode(meeting)} className="p-1.5 bg-indigo-100 text-indigo-600 rounded hover:bg-indigo-200" title="QR Code"><FaQrcode /></button>
                         <button onClick={() => viewParticipants(meeting)} className="p-1.5 bg-blue-100 text-blue-600 rounded hover:bg-blue-200" title="View Participants"><FaEye /></button>
+                        <div className="relative">
+                          <button onClick={() => setOpenExportMenu(openExportMenu === meeting._id ? null : meeting._id)} className="p-1.5 bg-green-100 text-green-600 rounded hover:bg-green-200" title="Export"><FaDownload /></button>
+                          {openExportMenu === meeting._id && (
+                            <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-10 min-w-[120px]">
+                              <button onClick={() => exportMeeting(meeting._id, 'pdf')} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"><FaFilePdf className="text-red-500" /> PDF</button>
+                              <button onClick={() => exportMeeting(meeting._id, 'excel')} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"><FaFileExcel className="text-green-500" /> Excel</button>
+                              <button onClick={() => exportMeeting(meeting._id, 'html')} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"><FaFileCode className="text-blue-500" /> HTML</button>
+                            </div>
+                          )}
+                        </div>
                         <select onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)} value={meeting.status} className="text-sm border border-gray-200 rounded px-2 py-1 bg-white"><option value="scheduled">Scheduled</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
                       </td>
                     </tr>
@@ -429,12 +537,12 @@ const AdminDashboard = () => {
         {activeTab === "requests" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div><label className="text-xs text-gray-500 block mb-1">Status</label><select value={requestFilter.status} onChange={(e) => setRequestFilter({...requestFilter, status: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg"><option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select></div>
                 <div><label className="text-xs text-gray-500 block mb-1">From Date</label><input type="date" value={requestFilter.startDate} onChange={(e) => setRequestFilter({...requestFilter, startDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
                 <div><label className="text-xs text-gray-500 block mb-1">To Date</label><input type="date" value={requestFilter.endDate} onChange={(e) => setRequestFilter({...requestFilter, endDate: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
                 <div><label className="text-xs text-gray-500 block mb-1">Search</label><input type="text" placeholder="Service name..." value={requestFilter.search} onChange={(e) => setRequestFilter({...requestFilter, search: e.target.value})} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg" /></div>
-                <div className="col-span-2 flex items-end gap-2"><button onClick={resetRequestFilters} className="px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset Filters</button></div>
+                <div className="flex items-end gap-2"><button onClick={resetRequestFilters} className="px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">Reset</button></div>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -450,10 +558,7 @@ const AdminDashboard = () => {
                       <td className="px-6 py-4">{getStatusBadge(request.status)}</td>
                       <td className="px-6 py-4">
                         {request.status === 'pending' && (
-                          <button onClick={() => { setSelectedRequest(request); setNewStatus("approved"); setStatusNote(""); setShowUpdateStatus(true); }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">Update Status</button>
-                        )}
-                        {request.status !== 'pending' && (
-                          <span className="text-gray-400 text-sm">No actions</span>
+                          <button onClick={() => { setSelectedRequest(request); setNewStatus("approved"); setStatusNote(""); setShowUpdateStatus(true); }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">Update</button>
                         )}
                       </td>
                     </tr>
@@ -465,6 +570,32 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Create Meeting Modal */}
+        {showCreateMeeting && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowCreateMeeting(false)}>
+            <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4 flex justify-between items-center sticky top-0">
+                <h2 className="text-xl font-bold text-white">Create New Meeting</h2>
+                <button onClick={() => setShowCreateMeeting(false)} className="text-white/80 hover:text-white text-2xl">&times;</button>
+              </div>
+              <form onSubmit={handleCreateMeeting} className="p-6 space-y-5">
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Title</label><input type="text" value={newMeeting.title} onChange={(e) => setNewMeeting({...newMeeting, title: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" required /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Description *</label><textarea rows="3" value={newMeeting.description} onChange={(e) => setNewMeeting({...newMeeting, description: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required placeholder="Meeting agenda, topics to discuss..." /></div>
+                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Leader Name *</label><input type="text" value={newMeeting.meetingLeader.name} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, name: e.target.value}})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Leader Position *</label><input type="text" value={newMeeting.meetingLeader.position} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, position: e.target.value}})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required /></div></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Department</label><input type="text" value={newMeeting.meetingLeader.department} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, department: e.target.value}})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
+                <div className="grid grid-cols-3 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Date *</label><input type="date" value={newMeeting.meetingDate} onChange={(e) => setNewMeeting({...newMeeting, meetingDate: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label><input type="time" value={newMeeting.startTime} onChange={(e) => setNewMeeting({...newMeeting, startTime: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">End Time</label><input type="time" value={newMeeting.endTime} onChange={(e) => setNewMeeting({...newMeeting, endTime: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div></div>
+                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Location</label><input type="text" value={newMeeting.location} onChange={(e) => setNewMeeting({...newMeeting, location: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Type</label><select value={newMeeting.meetingType} onChange={(e) => setNewMeeting({...newMeeting, meetingType: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="special">Special</option></select></div></div>
+                <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowCreateMeeting(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button><button type="submit" disabled={creatingMeeting} className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">{creatingMeeting ? 'Creating...' : 'Create Meeting'}</button></div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Other Modals (QR Code, Participants, Update Status) remain the same */}
         {/* QR Code Modal */}
         {showQRCode && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowQRCode(null)}>
