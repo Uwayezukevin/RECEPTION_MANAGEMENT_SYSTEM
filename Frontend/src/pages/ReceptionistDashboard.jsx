@@ -1,4 +1,4 @@
-// src/pages/ReceptionistDashboard.jsx - Improved White Theme
+// src/pages/ReceptionistDashboard.jsx - With Visitor QR Code Link
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,7 +28,8 @@ import {
   FaBriefcase,
   FaChartLine,
   FaPhone,
-  FaIdCard
+  FaIdCard,
+  FaQrcode
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import API from "../service/api";
@@ -240,6 +241,9 @@ const ReceptionistDashboard = () => {
                 <FaSync className={refreshing ? "animate-spin" : ""} />
                 <span>Refresh</span>
               </button>
+              <button onClick={() => navigate("/visitor-qrcode")} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 text-sm">
+                <FaQrcode /> <span>Visitor QR</span>
+              </button>
               <button onClick={() => navigate("/register")} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2 text-sm">
                 <FaUserPlus /> <span>Add Staff</span>
               </button>
@@ -267,6 +271,9 @@ const ReceptionistDashboard = () => {
             <div className="sm:hidden py-3 space-y-2 border-t border-gray-100">
               <button onClick={handleRefresh} className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center justify-center space-x-2">
                 <FaSync /> <span>Refresh</span>
+              </button>
+              <button onClick={() => navigate("/visitor-qrcode")} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2">
+                <FaQrcode /> <span>Visitor QR</span>
               </button>
               <button onClick={() => navigate("/register")} className="w-full bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2">
                 <FaUserPlus /> <span>Add Staff</span>
@@ -375,7 +382,9 @@ const ReceptionistDashboard = () => {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[800px]">
-                  <thead className="bg-gray-50 border-b border-gray-200"><tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Service</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Visitor</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Event Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Status</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Actions</th></tr></thead>
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Service</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Visitor</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Event Date</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Status</th><th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Actions</th></tr>
+                  </thead>
                   <tbody className="divide-y divide-gray-100">
                     {requests.map((req) => (
                       <tr key={req._id} className="hover:bg-gray-50">
@@ -398,7 +407,14 @@ const ReceptionistDashboard = () => {
           <div>
             <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
               <div><h3 className="text-gray-800 font-semibold">Current Visitors</h3><p className="text-gray-500 text-sm">Visitors currently checked in</p></div>
-              <button onClick={() => navigate("/visitor-service")} className="bg-primary-600 text-white px-5 py-2 rounded-lg hover:bg-primary-700 flex items-center gap-2"><FaPlusCircle /> New Visitor</button>
+              <div className="flex gap-3">
+                <button onClick={() => navigate("/visitor-qrcode")} className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2">
+                  <FaQrcode /> Visitor QR
+                </button>
+                <button onClick={() => navigate("/visitor-service")} className="bg-primary-600 text-white px-5 py-2 rounded-lg hover:bg-primary-700 flex items-center gap-2">
+                  <FaPlusCircle /> New Visitor
+                </button>
+              </div>
             </div>
             {visitors.filter(v => v.status === "checked-in").length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100"><FaUsers className="text-5xl text-gray-300 mx-auto mb-4" /><h3 className="text-lg font-semibold text-gray-600">No Visitors Checked In</h3></div>
