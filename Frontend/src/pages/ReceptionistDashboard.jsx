@@ -222,7 +222,7 @@ const ReceptionistDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
+              <img src={logo} alt="Logo" className="h-6 w-auto object-contain" />
               <div className="hidden sm:block">
                 <h2 className="text-gray-800 text-lg font-semibold">Receptionist Dashboard</h2>
                 <p className="text-gray-400 text-xs">Manage visitors and service requests</p>
@@ -523,9 +523,6 @@ const ReceptionistDashboard = () => {
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-800 text-sm">{visitor.fullName}</h4>
-                            <p className="text-xs text-gray-500 flex items-center gap-1">
-                              <FaBuilding size={10} /> {visitor.institution || 'N/A'}
-                            </p>
                           </div>
                         </div>
                         <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs font-semibold flex items-center gap-1">
