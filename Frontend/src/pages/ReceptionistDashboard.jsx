@@ -1,4 +1,4 @@
-// src/pages/ReceptionistDashboard.jsx - Fixed Logo Size
+// src/pages/ReceptionistDashboard.jsx - Improved with Horizontal Filters
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -187,16 +187,6 @@ const ReceptionistDashboard = () => {
     return styles[status] || "bg-gray-100 text-gray-800";
   };
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'pending': return <FaClock className="text-yellow-500" />;
-      case 'approved': return <FaCheckCircle className="text-green-500" />;
-      case 'rejected': return <FaTimes className="text-red-500" />;
-      case 'completed': return <FaCheckCircle className="text-blue-500" />;
-      default: return <FaClock className="text-gray-500" />;
-    }
-  };
-
   const filteredServices = services.filter(service => 
     service.name?.toLowerCase().includes(serviceSearch.toLowerCase())
   );
@@ -205,7 +195,7 @@ const ReceptionistDashboard = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <img src={logo} alt="Logo" className="h-10 mx-auto mb-4 animate-pulse" />
+          <img src={logo} alt="Logo" className="h-12 mx-auto mb-4 animate-pulse" />
           <FaSpinner className="animate-spin text-3xl text-primary-600 mx-auto mb-4" />
           <p className="text-gray-500">Loading dashboard...</p>
         </div>
@@ -215,14 +205,14 @@ const ReceptionistDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation - Proper Logo Size */}
+      {/* Navigation */}
       <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-auto p-5">
+          <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-2">
-              <img src={logo} alt="Logo" className="h-10 w-10 object-contain rounded" />
+              <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
               <div className="hidden sm:block">
-                <h2 className="text-gray-800 text-base font-semibold">Receptionist Dashboard</h2>
+                <h2 className="text-gray-800 text-sm font-semibold">Receptionist Dashboard</h2>
                 <p className="text-gray-400 text-xs">Manage visitors and service requests</p>
               </div>
             </div>
@@ -396,50 +386,62 @@ const ReceptionistDashboard = () => {
           </div>
         )}
 
-        {/* Requests Tab */}
+        {/* Requests Tab - Horizontal Filters */}
         {activeTab === "requests" && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-3 bg-gray-50 border-b border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <div className="relative">
-                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                  <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    value={searchQuery} 
-                    onChange={(e) => setSearchQuery(e.target.value)} 
-                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 outline-none transition" 
-                  />
+              {/* Horizontal Filter Layout */}
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-[10px] text-gray-500 mb-1">Search</label>
+                  <div className="relative">
+                    <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                    <input 
+                      type="text" 
+                      placeholder="Service, visitor or email..." 
+                      value={searchQuery} 
+                      onChange={(e) => setSearchQuery(e.target.value)} 
+                      className="w-full pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 outline-none transition" 
+                    />
+                  </div>
                 </div>
-                <div className="relative">
-                  <FaCalendarAlt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                  <input 
-                    type="date" 
-                    value={dateFilter} 
-                    onChange={(e) => setDateFilter(e.target.value)} 
-                    className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 outline-none transition" 
-                  />
+                <div className="w-36">
+                  <label className="block text-[10px] text-gray-500 mb-1">Event Date</label>
+                  <div className="relative">
+                    <FaCalendarAlt className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                    <input 
+                      type="date" 
+                      value={dateFilter} 
+                      onChange={(e) => setDateFilter(e.target.value)} 
+                      className="w-full pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 outline-none transition" 
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <FaFilter className="text-gray-400 text-xs" />
-                  <select 
-                    value={statusFilter} 
-                    onChange={(e) => setStatusFilter(e.target.value)} 
-                    className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 outline-none transition bg-white"
+                <div className="w-36">
+                  <label className="block text-[10px] text-gray-500 mb-1">Status</label>
+                  <div className="flex items-center gap-1">
+                    <FaFilter className="text-gray-400 text-xs" />
+                    <select 
+                      value={statusFilter} 
+                      onChange={(e) => setStatusFilter(e.target.value)} 
+                      className="flex-1 px-2 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary-500 outline-none transition bg-white"
+                    >
+                      <option value="all">All</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <button 
+                    onClick={exportData} 
+                    className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 flex items-center gap-1.5 text-xs transition mt-[18px]"
                   >
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                    <FaDownload size={10} /> Export CSV
+                  </button>
                 </div>
-                <button 
-                  onClick={exportData} 
-                  className="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 flex items-center justify-center gap-1.5 text-xs transition"
-                >
-                  <FaDownload size={10} /> Export CSV
-                </button>
               </div>
             </div>
             {requests.length === 0 ? (
@@ -463,10 +465,35 @@ const ReceptionistDashboard = () => {
                     {requests.map((req) => (
                       <tr key={req._id} className="hover:bg-gray-50 transition">
                         <td className="px-3 py-2 text-xs"><span className="font-medium text-gray-800">{req.service?.name || 'N/A'}</span></td>
-                        <td className="px-3 py-2"><div><p className="font-medium text-gray-800 text-xs">{req.visitor?.fullName || 'N/A'}</p><p className="text-[10px] text-gray-500">{req.visitor?.email}</p></div></td>
+                        <td className="px-3 py-2">
+                          <div>
+                            <p className="font-medium text-gray-800 text-xs">{req.visitor?.fullName || 'N/A'}</p>
+                            <p className="text-[10px] text-gray-500">{req.visitor?.email}</p>
+                          </div>
+                        </td>
                         <td className="px-3 py-2 text-xs text-gray-600">{new Date(req.eventDate).toLocaleDateString()}</td>
-                        <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusBadge(req.status)}`}>{req.status}</span></td>
-                        <td className="px-3 py-2"><div className="flex gap-1"><button onClick={() => handleViewRequest(req)} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"><FaEye size={12} /></button>{req.status === "pending" && (<><button onClick={() => handleUpdateStatus(req._id, "approved")} className="p-1 text-green-600 hover:bg-green-50 rounded"><FaCheckCircle size={12} /></button><button onClick={() => handleUpdateStatus(req._id, "rejected")} className="p-1 text-red-600 hover:bg-red-50 rounded"><FaTimes size={12} /></button></>)}</div></td>
+                        <td className="px-3 py-2">
+                          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${getStatusBadge(req.status)}`}>
+                            {req.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex gap-1">
+                            <button onClick={() => handleViewRequest(req)} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition" title="View Details">
+                              <FaEye size={12} />
+                            </button>
+                            {req.status === "pending" && (
+                              <>
+                                <button onClick={() => handleUpdateStatus(req._id, "approved")} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Approve">
+                                  <FaCheckCircle size={12} />
+                                </button>
+                                <button onClick={() => handleUpdateStatus(req._id, "rejected", "Request rejected by receptionist")} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Reject">
+                                  <FaTimes size={12} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -516,9 +543,6 @@ const ReceptionistDashboard = () => {
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-800 text-xs">{visitor.fullName}</h4>
-                            <p className="text-[10px] text-gray-500 flex items-center gap-1">
-                              <FaBuilding size={8} /> {visitor.institution || 'N/A'}
-                            </p>
                           </div>
                         </div>
                         <span className="px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full text-[10px] font-semibold flex items-center gap-0.5">
