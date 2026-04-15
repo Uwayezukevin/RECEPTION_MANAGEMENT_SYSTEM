@@ -9,8 +9,8 @@ import Register from "./pages/Register";
 import ReceptionistDashboard from "./pages/ReceptionistDashboard";
 import VisitorServiceRequest from "./pages/VisitorServiceRequest";
 import VisitorsList from "./pages/VisitorsList";
-import Home from "./pages/Home";
 import RequestStatus from "./pages/RequestStatus";
+import VisitorQrcode from "./pages/VisitorQrcode";
 
 // Meeting Module Imports
 import MeetingSignInPage from "./pages/MeetingSignInPage";
@@ -42,12 +42,13 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Login />} />
           <Route path="/visitor-service" element={<VisitorServiceRequest />} />
           <Route path="/request-status" element={<RequestStatus />} />
+          <Route path="/visitor-qrcode" element={<VisitorQrcode />} />
           <Route path= "/meeting/signin/:meetingId" element = {<MeetingSignInPage />}/>
           {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
+          
           <Route path="/register" element={<Register />} />
           
           {/* Receptionist Routes (also accessible by Admin) */}

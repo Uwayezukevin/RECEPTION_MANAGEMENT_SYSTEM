@@ -55,7 +55,7 @@ const Login = () => {
         <div className="p-8">
           <div className="text-center mb-8">
             <img src={logo} alt="Logo" className="h-16 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Welcome</h2>
             <p className="text-gray-500 mt-1">Sign in to your account</p>
           </div>
 
