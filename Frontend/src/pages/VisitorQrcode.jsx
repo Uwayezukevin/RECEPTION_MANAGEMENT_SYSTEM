@@ -1,4 +1,4 @@
-// src/pages/ReceptionistDashboard.jsx - Improved Version
+// src/pages/ReceptionistDashboard.jsx - Services Table without Description Column
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,7 +14,6 @@ import {
   FaUserCircle,
   FaSpinner,
   FaEnvelope,
-  FaUserPlus,
   FaPlusCircle,
   FaSearch,
   FaCalendarAlt,
@@ -26,14 +25,8 @@ import {
   FaBars,
   FaTimes as FaTimesIcon,
   FaBriefcase,
-  FaChartLine,
   FaPhone,
-  FaIdCard,
-  FaQrcode,
-  FaTrashAlt,
-  FaEdit,
-  FaPrint,
-  FaShareAlt
+  FaQrcode
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import API from "../service/api";
@@ -163,7 +156,7 @@ const ReceptionistDashboard = () => {
       return;
     }
     
-    const headers = ["Request ID", "Service", "Visitor", "Email", "Phone", "Status", "Event Date", "Submitted", "Completed"];
+    const headers = ["Request ID", "Service", "Visitor", "Email", "Phone", "Status", "Event Date", "Submitted"];
     const rows = requests.map(r => [
       r._id.slice(-8).toUpperCase(),
       r.service?.name || "N/A",
@@ -173,7 +166,6 @@ const ReceptionistDashboard = () => {
       r.status,
       new Date(r.eventDate).toLocaleDateString(),
       new Date(r.createdAt).toLocaleString(),
-      r.completedAt ? new Date(r.completedAt).toLocaleString() : "N/A",
     ]);
 
     const csvContent = [headers.join(","), ...rows.map(row => row.map(cell => `"${cell}"`).join(","))].join("\n");
@@ -208,8 +200,7 @@ const ReceptionistDashboard = () => {
   };
 
   const filteredServices = services.filter(service => 
-    service.name?.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-    service.description?.toLowerCase().includes(serviceSearch.toLowerCase())
+    service.name?.toLowerCase().includes(serviceSearch.toLowerCase())
   );
 
   if (loading) {
@@ -249,9 +240,6 @@ const ReceptionistDashboard = () => {
               </button>
               <button onClick={() => navigate("/visitor-qrcode")} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center space-x-2 text-sm transition">
                 <FaQrcode /> <span>Visitor QR</span>
-              </button>
-              <button onClick={() => navigate("/register")} className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2 text-sm transition">
-                <FaUserPlus /> <span>Add Staff</span>
               </button>
               <div className="relative">
                 <button 
@@ -299,9 +287,6 @@ const ReceptionistDashboard = () => {
               <button onClick={() => navigate("/visitor-qrcode")} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2">
                 <FaQrcode /> <span>Visitor QR</span>
               </button>
-              <button onClick={() => navigate("/register")} className="w-full bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2">
-                <FaUserPlus /> <span>Add Staff</span>
-              </button>
               <button onClick={logout} className="w-full bg-red-600 text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2">
                 <FaSignOutAlt /> <span>Logout</span>
               </button>
@@ -311,7 +296,7 @@ const ReceptionistDashboard = () => {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards - Improved */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-blue-500 hover:shadow-md transition">
             <div className="flex items-center justify-between">
@@ -339,7 +324,7 @@ const ReceptionistDashboard = () => {
           </div>
         </div>
 
-        {/* Tabs - Improved */}
+        {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-2">
           {[
             { id: "services", label: "Services", icon: FaBriefcase, count: services.length, color: "bg-blue-100 text-blue-700" },
@@ -360,7 +345,7 @@ const ReceptionistDashboard = () => {
           ))}
         </div>
 
-        {/* Services Tab */}
+        {/* Services Tab - Only Service Name Column */}
         {activeTab === "services" && (
           <div>
             <div className="bg-white rounded-xl shadow-sm p-4 mb-4 border border-gray-100">
@@ -368,7 +353,7 @@ const ReceptionistDashboard = () => {
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Search services by name or description..." 
+                  placeholder="Search services by name..." 
                   value={serviceSearch} 
                   onChange={(e) => setServiceSearch(e.target.value)} 
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition" 
@@ -389,7 +374,6 @@ const ReceptionistDashboard = () => {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -402,7 +386,6 @@ const ReceptionistDashboard = () => {
                               <span className="font-medium text-gray-900">{service.name}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-gray-500 text-sm">{service.description || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -416,7 +399,7 @@ const ReceptionistDashboard = () => {
           </div>
         )}
 
-        {/* Requests Tab - Improved */}
+        {/* Requests Tab */}
         {activeTab === "requests" && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
@@ -539,7 +522,7 @@ const ReceptionistDashboard = () => {
           </div>
         )}
 
-        {/* Visitors Tab - Improved */}
+        {/* Visitors Tab */}
         {activeTab === "visitors" && (
           <div>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
