@@ -210,7 +210,7 @@ const ReceptionistDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             <div className="flex items-center space-x-2">
-              <img src={logo} alt="Logo" className="h-8 w-auto object-contain" />
+              <img src={logo} alt="Logo" className="h-6 w-6 object-cover" />
               <div className="hidden sm:block">
                 <h2 className="text-gray-800 text-sm font-semibold">Receptionist Dashboard</h2>
                 <p className="text-gray-400 text-xs">Manage visitors and service requests</p>
