@@ -1,4 +1,4 @@
-// src/pages/admin/AdminDashboard.jsx - Complete Fixed Version
+// src/pages/admin/AdminDashboard.jsx - Fixed Version
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -16,7 +16,6 @@ import {
   FaEye,
   FaFilter,
   FaSearch,
-  FaCheck,
   FaTimes,
   FaCalendarWeek,
   FaUserClock,
@@ -29,10 +28,10 @@ import {
   FaFileExcel,
   FaFileCode
 } from "react-icons/fa";
-import { MdAdminPanelSettings } from "react-icons/md";
 import { QRCodeSVG } from "qrcode.react";
 import API from "../../service/api";
 import toast from "react-hot-toast";
+import RequestModal from "../../components/RequestModal";
 import logo from "../../assets/image.png";
 
 const AdminDashboard = () => {
@@ -48,11 +47,8 @@ const AdminDashboard = () => {
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
   const [participants, setParticipants] = useState([]);
-  const [showUpdateStatus, setShowUpdateStatus] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const [newStatus, setNewStatus] = useState("approved");
-  const [statusNote, setStatusNote] = useState("");
-  const [updating, setUpdating] = useState(false);
   const [openExportMenu, setOpenExportMenu] = useState(null);
   
   // Stats
@@ -180,30 +176,14 @@ const AdminDashboard = () => {
     toast.success("Dashboard refreshed");
   };
 
-  const handleViewRequest = (request) => {
-    setSelectedRequest(request);
-    setShowUpdateStatus(true);
+  const handleUpdateStatus = async (requestId, status, notes) => {
+    toast.info("Only receptionists can update request status");
+    return Promise.resolve();
   };
 
-  const updateRequestStatus = async () => {
-    if (newStatus === 'rejected' && !statusNote) {
-      toast.error("Please provide a reason for rejection");
-      return;
-    }
-    setUpdating(true);
-    try {
-      await API.updateRequestStatus(selectedRequest._id, { status: newStatus, notes: statusNote });
-      toast.success(`Request ${newStatus} successfully`);
-      fetchAllData(true);
-      setShowUpdateStatus(false);
-      setSelectedRequest(null);
-      setStatusNote("");
-      setNewStatus("approved");
-    } catch (error) {
-      toast.error("Failed to update request status");
-    } finally {
-      setUpdating(false);
-    }
+  const handleViewRequest = (request) => {
+    setSelectedRequest(request);
+    setShowRequestModal(true);
   };
 
   const updateMeetingStatus = async (meetingId, status) => {
@@ -451,7 +431,17 @@ const AdminDashboard = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Title</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Date</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Time</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Location</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Leader</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Participants</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Actions</th></tr></thead>
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Title</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Date</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Time</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Location</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Leader</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Participants</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredMeetings.map((meeting) => (
                     <tr key={meeting._id} className="hover:bg-gray-50">
@@ -476,12 +466,21 @@ const AdminDashboard = () => {
                               </div>
                             )}
                           </div>
-                          <select onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)} value={meeting.status} className="text-xs border border-gray-200 rounded px-2 py-1 bg-white"><option value="scheduled">Scheduled</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select>
+                          <select onChange={(e) => updateMeetingStatus(meeting._id, e.target.value)} value={meeting.status} className="text-xs border border-gray-200 rounded px-2 py-1 bg-white">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="ongoing">Ongoing</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {filteredMeetings.length === 0 && <tr><td colSpan="8" className="px-5 py-8 text-center text-gray-400">No meetings found</td></tr>}
+                  {filteredMeetings.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="px-5 py-8 text-center text-gray-400">No meetings found</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -502,19 +501,39 @@ const AdminDashboard = () => {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200"><tr><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Name</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Email</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Phone</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Nationality</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Check In</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th></tr></thead>
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Name</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Email</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Phone</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Nationality</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Check In</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredVisitors.map((visitor) => (
-                    <tr key={visitor._id} className="hover:bg-gray-50"><td className="px-5 py-3 font-medium text-gray-900">{visitor.fullName}</td><td className="px-5 py-3 text-gray-600">{visitor.email}</td><td className="px-5 py-3 text-gray-600">{visitor.contactValue || '-'}</td><td className="px-5 py-3 text-gray-600 capitalize">{visitor.nationality}</td><td className="px-5 py-3 text-gray-600">{new Date(visitor.checkInTime).toLocaleString()}</td><td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${visitor.status === 'checked-in' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{visitor.status === 'checked-in' ? '✓ Checked In' : '✓ Checked Out'}</span></td></tr>
+                    <tr key={visitor._id} className="hover:bg-gray-50">
+                      <td className="px-5 py-3 font-medium text-gray-900">{visitor.fullName}</td>
+                      <td className="px-5 py-3 text-gray-600">{visitor.email}</td>
+                      <td className="px-5 py-3 text-gray-600">{visitor.contactValue || '-'}</td>
+                      <td className="px-5 py-3 text-gray-600 capitalize">{visitor.nationality}</td>
+                      <td className="px-5 py-3 text-gray-600">{new Date(visitor.checkInTime).toLocaleString()}</td>
+                      <td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${visitor.status === 'checked-in' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>{visitor.status === 'checked-in' ? '✓ Checked In' : '✓ Checked Out'}</span></td>
+                    </tr>
                   ))}
-                  {filteredVisitors.length === 0 && <tr><td colSpan="6" className="px-5 py-8 text-center text-gray-400">No visitors found</td></tr>}
+                  {filteredVisitors.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="px-5 py-8 text-center text-gray-400">No visitors found</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* Requests Section - With Update Button for All Requests */}
+        {/* Requests Section */}
         {activeTab === "requests" && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
@@ -546,31 +565,16 @@ const AdminDashboard = () => {
                       <td className="px-5 py-3 text-gray-600 max-w-xs truncate">{request.message || '-'}</td>
                       <td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>{request.status}</span></td>
                       <td className="px-5 py-3">
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => handleViewRequest(request)} 
-                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition"
-                          >
-                            Update
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setSelectedRequest(request);
-                              setNewStatus("approved");
-                              setStatusNote("");
-                              setShowUpdateStatus(true);
-                            }} 
-                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition"
-                            title="Change Status"
-                          >
-                            <FaEye size={14} />
-                          </button>
-                        </div>
+                        <button onClick={() => handleViewRequest(request)} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition flex items-center gap-1">
+                          <FaEye size={12} /> View Details
+                        </button>
                       </td>
                     </tr>
                   ))}
                   {filteredRequests.length === 0 && (
-                    <tr><td colSpan="6" className="px-5 py-8 text-center text-gray-400">No requests found</td></tr>
+                    <tr>
+                      <td colSpan="6" className="px-5 py-8 text-center text-gray-400">No requests found</td>
+                    </tr>
                   )}
                 </tbody>
               </table>
@@ -637,31 +641,13 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Update Status Modal */}
-        {showUpdateStatus && selectedRequest && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowUpdateStatus(false)}>
-            <div className="bg-white rounded-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-              <div className="bg-primary-600 px-6 py-4 rounded-t-2xl">
-                <div className="flex items-center gap-3"><img src={logo} alt="Logo" className="h-8" /><div><h2 className="text-xl font-bold text-white">Update Request Status</h2><p className="text-white/80 text-sm">{selectedRequest.service?.name}</p></div></div>
-              </div>
-              <div className="p-6 space-y-4">
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
-                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
-                    <option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option>
-                  </select>
-                </div>
-                {newStatus === 'rejected' && (
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Reason for Rejection *</label>
-                    <textarea rows="3" value={statusNote} onChange={(e) => setStatusNote(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Please provide a reason..."/>
-                  </div>
-                )}
-                <div className="flex gap-3">
-                  <button onClick={() => setShowUpdateStatus(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button>
-                  <button onClick={updateRequestStatus} disabled={updating} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{updating ? 'Updating...' : 'Update Status'}</button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Request Modal */}
+        {showRequestModal && selectedRequest && (
+          <RequestModal
+            request={selectedRequest}
+            onClose={() => setShowRequestModal(false)}
+            onUpdateStatus={handleUpdateStatus}
+          />
         )}
       </div>
     </div>
