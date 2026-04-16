@@ -1,4 +1,4 @@
-// src/pages/admin/AdminDashboard.jsx - Improved Version
+// src/pages/admin/AdminDashboard.jsx - Complete Fixed Version
 import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -27,11 +27,7 @@ import {
   FaPlus,
   FaFilePdf,
   FaFileExcel,
-  FaFileCode,
-  FaHome,
-  FaExclamationTriangle,
-  FaUserFriends,
-  FaChartPie
+  FaFileCode
 } from "react-icons/fa";
 import { MdAdminPanelSettings } from "react-icons/md";
 import { QRCodeSVG } from "qrcode.react";
@@ -184,6 +180,11 @@ const AdminDashboard = () => {
     toast.success("Dashboard refreshed");
   };
 
+  const handleViewRequest = (request) => {
+    setSelectedRequest(request);
+    setShowUpdateStatus(true);
+  };
+
   const updateRequestStatus = async () => {
     if (newStatus === 'rejected' && !statusNote) {
       toast.error("Please provide a reason for rejection");
@@ -313,7 +314,8 @@ const AdminDashboard = () => {
     if (meetingFilter.type !== 'all' && meeting.meetingType !== meetingFilter.type) return false;
     if (meetingFilter.startDate && new Date(meeting.meetingDate) < new Date(meetingFilter.startDate)) return false;
     if (meetingFilter.endDate && new Date(meeting.meetingDate) > new Date(meetingFilter.endDate)) return false;
-    if (meetingFilter.search && !meeting.title?.toLowerCase().includes(meetingFilter.search.toLowerCase())) return false;
+    if (meetingFilter.search && !meeting.title?.toLowerCase().includes(meetingFilter.search.toLowerCase()) &&
+        !meeting.location?.toLowerCase().includes(meetingFilter.search.toLowerCase())) return false;
     return true;
   });
 
@@ -322,7 +324,8 @@ const AdminDashboard = () => {
     if (visitorFilter.nationality !== 'all' && visitor.nationality !== visitorFilter.nationality) return false;
     if (visitorFilter.startDate && new Date(visitor.checkInTime) < new Date(visitorFilter.startDate)) return false;
     if (visitorFilter.endDate && new Date(visitor.checkInTime) > new Date(visitorFilter.endDate)) return false;
-    if (visitorFilter.search && !visitor.fullName?.toLowerCase().includes(visitorFilter.search.toLowerCase())) return false;
+    if (visitorFilter.search && !visitor.fullName?.toLowerCase().includes(visitorFilter.search.toLowerCase()) &&
+        !visitor.email?.toLowerCase().includes(visitorFilter.search.toLowerCase())) return false;
     return true;
   });
 
@@ -376,13 +379,13 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
-              <button onClick={() => setShowCreateMeeting(true)} className="btn-primary flex items-center gap-2">
+              <button onClick={() => setShowCreateMeeting(true)} className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2">
                 <FaPlus /> Create Meeting
               </button>
-              <button onClick={handleRefresh} disabled={refreshing} className="btn-secondary flex items-center gap-2">
+              <button onClick={handleRefresh} disabled={refreshing} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
                 <FaSyncAlt className={refreshing ? "animate-spin" : ""} /> Refresh
               </button>
-              <button onClick={resetFilters} className="btn-secondary flex items-center gap-2">
+              <button onClick={resetFilters} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
                 <FaFilter /> Reset Filters
               </button>
               <button onClick={logout} className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition flex items-center gap-2">
@@ -423,9 +426,9 @@ const AdminDashboard = () => {
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 mb-5">
           {[
-            { id: "meetings", label: "Meetings", icon: FaCalendarAlt, count: filteredMeetings.length, color: "bg-yellow-500" },
-            { id: "visitors", label: "Visitors", icon: FaUserCheck, count: filteredVisitors.length, color: "bg-green-500" },
-            { id: "requests", label: "Requests", icon: FaClipboardList, count: filteredRequests.length, color: "bg-pink-500" }
+            { id: "meetings", label: "Meetings", icon: FaCalendarAlt, count: filteredMeetings.length },
+            { id: "visitors", label: "Visitors", icon: FaUserCheck, count: filteredVisitors.length },
+            { id: "requests", label: "Requests", icon: FaClipboardList, count: filteredRequests.length }
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all ${activeTab === tab.id ? "bg-primary-600 text-white shadow-md" : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"}`}>
               <tab.icon size={16} /> {tab.label} <span className="text-xs ml-1">({tab.count})</span>
@@ -448,8 +451,7 @@ const AdminDashboard = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Title</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Date</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Time</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Location</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Leader</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Participants</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Actions</th></tr>
-                </thead>
+                  <tr><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Title</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Date</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Time</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Location</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Leader</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Participants</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Actions</th></tr></thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredMeetings.map((meeting) => (
                     <tr key={meeting._id} className="hover:bg-gray-50">
@@ -512,7 +514,7 @@ const AdminDashboard = () => {
           </div>
         )}
 
-        {/* Requests Section */}
+        {/* Requests Section - With Update Button for All Requests */}
         {activeTab === "requests" && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 bg-gray-50 border-b border-gray-200">
@@ -525,12 +527,51 @@ const AdminDashboard = () => {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200"><tr><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Service</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Visitor</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Event Date</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Message</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th><th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Actions</th></tr></thead>
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Service</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Visitor</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Event Date</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Message</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Status</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-500">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredRequests.map((request) => (
-                    <tr key={request._id} className="hover:bg-gray-50"><td className="px-5 py-3 font-medium text-gray-900">{request.service?.name || 'N/A'}</td><td className="px-5 py-3 text-gray-600">{request.visitor?.fullName || 'N/A'}</td><td className="px-5 py-3 text-gray-600">{new Date(request.eventDate).toLocaleDateString()}</td><td className="px-5 py-3 text-gray-600 max-w-xs truncate">{request.message || '-'}</td><td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>{request.status}</span></td><td className="px-5 py-3">{request.status === 'pending' && <button onClick={() => { setSelectedRequest(request); setShowUpdateStatus(true); }} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">Update</button>}</td></tr>
+                    <tr key={request._id} className="hover:bg-gray-50">
+                      <td className="px-5 py-3 font-medium text-gray-900">{request.service?.name || 'N/A'}</td>
+                      <td className="px-5 py-3 text-gray-600">{request.visitor?.fullName || 'N/A'}</td>
+                      <td className="px-5 py-3 text-gray-600">{new Date(request.eventDate).toLocaleDateString()}</td>
+                      <td className="px-5 py-3 text-gray-600 max-w-xs truncate">{request.message || '-'}</td>
+                      <td className="px-5 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(request.status)}`}>{request.status}</span></td>
+                      <td className="px-5 py-3">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleViewRequest(request)} 
+                            className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition"
+                          >
+                            Update
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setNewStatus("approved");
+                              setStatusNote("");
+                              setShowUpdateStatus(true);
+                            }} 
+                            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+                            title="Change Status"
+                          >
+                            <FaEye size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   ))}
-                  {filteredRequests.length === 0 && <tr><td colSpan="6" className="px-5 py-8 text-center text-gray-400">No requests found</td></tr>}
+                  {filteredRequests.length === 0 && (
+                    <tr><td colSpan="6" className="px-5 py-8 text-center text-gray-400">No requests found</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -546,17 +587,17 @@ const AdminDashboard = () => {
                 <button onClick={() => setShowCreateMeeting(false)} className="text-white/80 hover:text-white text-2xl">&times;</button>
               </div>
               <form onSubmit={handleCreateMeeting} className="p-6 space-y-5">
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Title</label><input type="text" value={newMeeting.title} onChange={(e) => setNewMeeting({...newMeeting, title: e.target.value})} className="input-field" required /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">Description *</label><textarea rows="3" value={newMeeting.description} onChange={(e) => setNewMeeting({...newMeeting, description: e.target.value})} className="input-field" required placeholder="Meeting agenda, topics to discuss..." /></div>
-                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Leader Name *</label><input type="text" value={newMeeting.meetingLeader.name} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, name: e.target.value}})} className="input-field" required /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">Leader Position *</label><input type="text" value={newMeeting.meetingLeader.position} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, position: e.target.value}})} className="input-field" required /></div></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">Department</label><input type="text" value={newMeeting.meetingLeader.department} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, department: e.target.value}})} className="input-field" /></div>
-                <div className="grid grid-cols-3 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Date *</label><input type="date" value={newMeeting.meetingDate} onChange={(e) => setNewMeeting({...newMeeting, meetingDate: e.target.value})} className="input-field" required /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label><input type="time" value={newMeeting.startTime} onChange={(e) => setNewMeeting({...newMeeting, startTime: e.target.value})} className="input-field" /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">End Time</label><input type="time" value={newMeeting.endTime} onChange={(e) => setNewMeeting({...newMeeting, endTime: e.target.value})} className="input-field" /></div></div>
-                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Location</label><input type="text" value={newMeeting.location} onChange={(e) => setNewMeeting({...newMeeting, location: e.target.value})} className="input-field" /></div>
-                <div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Type</label><select value={newMeeting.meetingType} onChange={(e) => setNewMeeting({...newMeeting, meetingType: e.target.value})} className="input-field"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="special">Special</option></select></div></div>
-                <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowCreateMeeting(false)} className="flex-1 btn-secondary">Cancel</button><button type="submit" disabled={creatingMeeting} className="flex-1 btn-primary">{creatingMeeting ? 'Creating...' : 'Create Meeting'}</button></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Title</label><input type="text" value={newMeeting.title} onChange={(e) => setNewMeeting({...newMeeting, title: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500" required /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Description *</label><textarea rows="3" value={newMeeting.description} onChange={(e) => setNewMeeting({...newMeeting, description: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required placeholder="Meeting agenda, topics to discuss..." /></div>
+                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Leader Name *</label><input type="text" value={newMeeting.meetingLeader.name} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, name: e.target.value}})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Leader Position *</label><input type="text" value={newMeeting.meetingLeader.position} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, position: e.target.value}})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required /></div></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Department</label><input type="text" value={newMeeting.meetingLeader.department} onChange={(e) => setNewMeeting({...newMeeting, meetingLeader: {...newMeeting.meetingLeader, department: e.target.value}})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
+                <div className="grid grid-cols-3 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Date *</label><input type="date" value={newMeeting.meetingDate} onChange={(e) => setNewMeeting({...newMeeting, meetingDate: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" required /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label><input type="time" value={newMeeting.startTime} onChange={(e) => setNewMeeting({...newMeeting, startTime: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">End Time</label><input type="time" value={newMeeting.endTime} onChange={(e) => setNewMeeting({...newMeeting, endTime: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div></div>
+                <div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-700 mb-2">Location</label><input type="text" value={newMeeting.location} onChange={(e) => setNewMeeting({...newMeeting, location: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
+                <div><label className="block text-sm font-medium text-gray-700 mb-2">Meeting Type</label><select value={newMeeting.meetingType} onChange={(e) => setNewMeeting({...newMeeting, meetingType: e.target.value})} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="special">Special</option></select></div></div>
+                <div className="flex gap-3 pt-4"><button type="button" onClick={() => setShowCreateMeeting(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button><button type="submit" disabled={creatingMeeting} className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50">{creatingMeeting ? 'Creating...' : 'Create Meeting'}</button></div>
               </form>
             </div>
           </div>
@@ -570,7 +611,7 @@ const AdminDashboard = () => {
               <h3 className="text-xl font-bold mb-2">{showQRCode.title}</h3>
               <p className="text-gray-500 text-sm mb-4">Scan to sign in to this meeting</p>
               <QRCodeSVG value={`${window.location.origin}/meeting/signin/${showQRCode._id}`} size={200} className="mx-auto mb-4" />
-              <button onClick={() => setShowQRCode(null)} className="w-full btn-secondary">Close</button>
+              <button onClick={() => setShowQRCode(null)} className="w-full px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>
             </div>
           </div>
         )}
@@ -591,7 +632,7 @@ const AdminDashboard = () => {
                   </div>
                 )) : <p className="text-center text-gray-500 py-8">No participants yet</p>}
               </div>
-              <div className="border-t p-4 flex justify-end"><button onClick={() => setShowParticipants(false)} className="btn-secondary">Close</button></div>
+              <div className="border-t p-4 flex justify-end"><button onClick={() => setShowParticipants(false)} className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button></div>
             </div>
           </div>
         )}
@@ -605,18 +646,18 @@ const AdminDashboard = () => {
               </div>
               <div className="p-6 space-y-4">
                 <div><label className="block text-sm font-medium text-gray-700 mb-2">New Status</label>
-                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} className="input-field">
+                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg">
                     <option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option>
                   </select>
                 </div>
                 {newStatus === 'rejected' && (
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Reason for Rejection *</label>
-                    <textarea rows="3" value={statusNote} onChange={(e) => setStatusNote(e.target.value)} className="input-field" placeholder="Please provide a reason..."/>
+                    <textarea rows="3" value={statusNote} onChange={(e) => setStatusNote(e.target.value)} className="w-full p-2 border border-gray-300 rounded-lg" placeholder="Please provide a reason..."/>
                   </div>
                 )}
                 <div className="flex gap-3">
-                  <button onClick={() => setShowUpdateStatus(false)} className="flex-1 btn-secondary">Cancel</button>
-                  <button onClick={updateRequestStatus} disabled={updating} className="flex-1 btn-primary">{updating ? 'Updating...' : 'Update Status'}</button>
+                  <button onClick={() => setShowUpdateStatus(false)} className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancel</button>
+                  <button onClick={updateRequestStatus} disabled={updating} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{updating ? 'Updating...' : 'Update Status'}</button>
                 </div>
               </div>
             </div>
