@@ -122,19 +122,11 @@ const RequestModal = ({ request, onClose, onUpdateStatus }) => {
                 <p className="font-medium text-gray-800">{request.service?.name}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-500">Department</label>
-                <p className="font-medium text-gray-800">{request.service?.department || "N/A"}</p>
-              </div>
-              <div>
                 <label className="text-sm text-gray-500">Event Date</label>
                 <p className="font-medium text-gray-800 flex items-center space-x-1">
                   <FaCalendarAlt className="text-gray-400 text-sm" />
                   <span>{formatDate(request.eventDate)}</span>
                 </p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Duration</label>
-                <p className="font-medium text-gray-800">{request.service?.duration || 30} minutes</p>
               </div>
             </div>
           </div>
@@ -149,13 +141,6 @@ const RequestModal = ({ request, onClose, onUpdateStatus }) => {
               <div>
                 <label className="text-sm text-gray-500">Full Name</label>
                 <p className="font-medium text-gray-800">{request.visitor?.fullName}</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-500">Institution</label>
-                <p className="font-medium text-gray-800 flex items-center space-x-1">
-                  <FaBuilding className="text-gray-400 text-sm" />
-                  <span>{request.visitor?.institution || "N/A"}</span>
-                </p>
               </div>
               <div>
                 <label className="text-sm text-gray-500">Email</label>
